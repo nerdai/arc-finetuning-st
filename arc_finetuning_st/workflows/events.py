@@ -7,10 +7,6 @@ from llama_index.core.workflow import (
 class FormatTaskEvent(Event): ...
 
 
-class ReasoningEvent(Event):
-    reasoning: str
-
-
 class PredictionEvent(Event): ...
 
 
@@ -19,7 +15,3 @@ class EvaluationEvent(Event):
 
 
 class CorrectionEvent(Event): ...
-
-
-class HumanInputEvent(Event):
-    human_reasoning: str

@@ -10,10 +10,8 @@ from llama_index.core.workflow import (
 from llama_index.core.llms import LLM
 from arc_finetuning_st.workflows.events import (
     FormatTaskEvent,
-    ReasoningEvent,
     PredictionEvent,
     EvaluationEvent,
-    HumanInputEvent,
     CorrectionEvent,
 )
 from arc_finetuning_st.workflows.human_input import HumanInputWorkflow
@@ -42,12 +40,11 @@ class WorkflowOutput(BaseModel):
     attempts: List[str]
 
 
-class FinetuningDatasetWorkflow(Workflow):
+class ARCTaskSolverWorkflow(Workflow):
 
-    def __init__(self, llm: LLM, testing: bool = False, **kwargs) -> None:
+    def __init__(self, llm: LLM, **kwargs) -> None:
         super().__init__(**kwargs)
         self.llm = llm
-        self.testing = testing
         self._max_attempts = 3
 
     @step
@@ -152,7 +149,7 @@ async def _test_workflow():
     with open(task_path) as f:
         task = json.load(f)
 
-    w = FinetuningDatasetWorkflow(timeout=None, verbose=False, llm=OpenAI("gpt-4o"))
+    w = ARCTaskSolverWorkflow(timeout=None, verbose=False, llm=OpenAI("gpt-4o"))
     w.add_workflows(human_input_workflow=HumanInputWorkflow())
     attempts = await w.run(task=task)
 
