@@ -4,12 +4,18 @@ from llama_index.core.workflow import (
 )
 
 
+class FormatTaskEvent(Event): ...
+
+
 class ReasoningEvent(Event):
     reasoning: str
 
 
-class PredictionEvent(Event):
-    prediction: List[List[int]]
+class PredictionEvent(Event): ...
+
+
+class CorrectionEvent(Event):
+    critique: str
 
 
 class EvaluationEvent(Event):
