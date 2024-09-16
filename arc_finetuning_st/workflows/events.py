@@ -14,12 +14,11 @@ class ReasoningEvent(Event):
 class PredictionEvent(Event): ...
 
 
-class CorrectionEvent(Event):
-    critique: str
-
-
 class EvaluationEvent(Event):
-    correct: bool
+    passing: bool
+
+
+class CorrectionEvent(Event): ...
 
 
 class HumanInputEvent(Event):

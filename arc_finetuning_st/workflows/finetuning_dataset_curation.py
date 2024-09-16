@@ -1,5 +1,5 @@
-import json
-
+from typing import List
+from llama_index.core.bridge.pydantic import BaseModel, Field
 from llama_index.core.workflow import (
     Workflow,
     Context,
@@ -19,6 +19,8 @@ from arc_finetuning_st.workflows.events import (
 from arc_finetuning_st.workflows.prompts import (
     REFLECTION_PROMPT_TEMPLATE,
     PREDICTION_PROMPT_TEMPLATE,
+    Prediction,
+    Correction,
 )
 
 example_template = """===
@@ -32,11 +34,17 @@ OUTPUT:
 """
 
 
+class WorkflowOutput(BaseModel):
+    passing: bool
+    attempts: List[str]
+
+
 class FinetuningDatasetWorkflow(Workflow):
 
-    def __init__(self, llm: LLM, **kwargs) -> None:
+    def __init__(self, llm: LLM, testing: bool = False, **kwargs) -> None:
         super().__init__(**kwargs)
         self.llm = llm
+        self.testing = testing
         self._max_attempts = 3
 
     @step
@@ -67,37 +75,49 @@ class FinetuningDatasetWorkflow(Workflow):
         return FormatTaskEvent()
 
     @step
-    async def prediction(self, ctx: Context, ev: FormatTaskEvent) -> PredictionEvent:
+    async def prediction(
+        self, ctx: Context, ev: FormatTaskEvent
+    ) -> PredictionEvent | StopEvent:
         prompt_vars = await ctx.get("prompt_vars")
-        pred = await self.llm.apredict(PREDICTION_PROMPT_TEMPLATE, **prompt_vars)
-        try:
-            pred = json.loads(pred)
-        except json.JSONDecodeError:
-            raise
-        attempts = [pred["output"]]
+        pred: Prediction = await self.llm.astructured_predict(
+            Prediction, PREDICTION_PROMPT_TEMPLATE, **prompt_vars
+        )
+        attempts = [pred.prediction]
         await ctx.set("attempts", attempts)
         return PredictionEvent()
 
     @step
-    async def reflection(
+    async def evaluation(
         self, ctx: Context, ev: PredictionEvent | CorrectionEvent
+    ) -> EvaluationEvent:
+        task = await ctx.get("task")
+        attempts = await ctx.get("attempts")
+        prediction_str = attempts[-1]
+        prediction = Prediction.prediction_str_to_int_array(prediction_str)
+        ground_truth = task["test"][0]["output"]
+
+        return EvaluationEvent(passing=(prediction == ground_truth))
+
+    @step
+    async def reflection(
+        self, ctx: Context, ev: EvaluationEvent
     ) -> CorrectionEvent | StopEvent:
         attempts = await ctx.get("attempts")
         prompt_vars = await ctx.get("prompt_vars")
         prompt_vars.update(predicted_output=attempts[-1])  # use last attempt
 
-        if len(attempts) == self._max_attempts:
-            return StopEvent(result=attempts)
+        if ev.passing or (len(attempts) == self._max_attempts):
+            result = WorkflowOutput(passing=ev.passing, attempts=attempts)
+            return StopEvent(result=result)
         else:
             # generate critique
-            corr = await self.llm.apredict(REFLECTION_PROMPT_TEMPLATE, **prompt_vars)
-            try:
-                corr = json.loads(corr)
-            except json.JSONDecodeError:
-                raise
-            attempts.append(corr["corrected_output"])
+            corr: Correction = await self.llm.astructured_predict(
+                Correction, REFLECTION_PROMPT_TEMPLATE, **prompt_vars
+            )
+
+            attempts.append(corr.correction)
             await ctx.set("attempts", attempts)
-            return CorrectionEvent(critique=corr["critique"])
+            return CorrectionEvent()
 
 
 async def _test_workflow():
