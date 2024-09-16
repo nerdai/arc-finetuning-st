@@ -16,6 +16,7 @@ from arc_finetuning_st.workflows.events import (
     HumanInputEvent,
     CorrectionEvent,
 )
+from arc_finetuning_st.workflows.human_input import HumanInputWorkflow
 from arc_finetuning_st.workflows.prompts import (
     REFLECTION_PROMPT_TEMPLATE,
     PREDICTION_PROMPT_TEMPLATE,
@@ -102,7 +103,7 @@ class FinetuningDatasetWorkflow(Workflow):
 
     @step
     async def reflection(
-        self, ctx: Context, ev: EvaluationEvent
+        self, ctx: Context, ev: EvaluationEvent, human_input_workflow: Workflow
     ) -> CorrectionEvent | StopEvent:
         attempts = await ctx.get("attempts")
         prompt_vars = await ctx.get("prompt_vars")
@@ -118,14 +119,23 @@ class FinetuningDatasetWorkflow(Workflow):
             )
 
             # work with human on critique
+            human_prompt = (
+                "\n\nA critique of the past incorrect prediction has been generated. "
+                "\nCRITIQUE:\n\n"
+                f"{critique_model.critique}"
+                "\n\nIf you'd like to correct the critique, enter a new one now. "
+                "Otherwise, return nothing.\n\n"
+                "New critique:\n\n"
+            )
+            human_input = await human_input_workflow.run(prompt=human_prompt)
+            if human_input:
+                critique_model.critique = human_input
 
             # generate correction
             prompt_vars.update(critique=critique_model.critique)
             corr: Correction = await self.llm.astructured_predict(
                 Correction, CORRECTION_PROMPT_TEMPLATE, **prompt_vars
             )
-            if self.testing:
-                return StopEvent(result=corr)
             attempts.append(corr.correction)
             await ctx.set("attempts", attempts)
             return CorrectionEvent()
@@ -143,6 +153,7 @@ async def _test_workflow():
         task = json.load(f)
 
     w = FinetuningDatasetWorkflow(timeout=None, verbose=False, llm=OpenAI("gpt-4o"))
+    w.add_workflows(human_input_workflow=HumanInputWorkflow())
     attempts = await w.run(task=task)
 
     print(attempts)
