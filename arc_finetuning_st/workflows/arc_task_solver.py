@@ -124,7 +124,11 @@ class ARCTaskSolverWorkflow(Workflow):
                 "Otherwise, return nothing.\n\n"
                 "New critique:\n\n"
             )
-            human_input = await human_input_workflow.run(prompt=human_prompt)
+            human_input = await human_input_workflow.run(
+                prompt=human_prompt,
+                rationale=critique_model.critique,
+                prediction=attempts[-1],
+            )
             if human_input:
                 critique_model.critique = human_input
 

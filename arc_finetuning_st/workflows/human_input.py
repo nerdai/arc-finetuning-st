@@ -22,7 +22,11 @@ class HumanInputWorkflow(Workflow):
     @step
     async def human_input(self, ev: StartEvent) -> StopEvent:
         prompt = str(ev.get("prompt", ""))
-        human_input = await self.input(prompt)
+        rationale = str(ev.get("rationale", ""))
+        prediction_str = str(ev.get("prediction", ""))
+        human_input = await self.input(
+            prompt, rationale=rationale, prediction=prediction_str
+        )
         return StopEvent(result=human_input)
 
 
