@@ -19,7 +19,9 @@ from arc_finetuning_st.workflows.events import (
 from arc_finetuning_st.workflows.prompts import (
     REFLECTION_PROMPT_TEMPLATE,
     PREDICTION_PROMPT_TEMPLATE,
+    CORRECTION_PROMPT_TEMPLATE,
     Prediction,
+    Critique,
     Correction,
 )
 
@@ -111,10 +113,19 @@ class FinetuningDatasetWorkflow(Workflow):
             return StopEvent(result=result)
         else:
             # generate critique
-            corr: Correction = await self.llm.astructured_predict(
-                Correction, REFLECTION_PROMPT_TEMPLATE, **prompt_vars
+            critique_model: Critique = await self.llm.astructured_predict(
+                Critique, REFLECTION_PROMPT_TEMPLATE, **prompt_vars
             )
 
+            # work with human on critique
+
+            # generate correction
+            prompt_vars.update(critique=critique_model.critique)
+            corr: Correction = await self.llm.astructured_predict(
+                Correction, CORRECTION_PROMPT_TEMPLATE, **prompt_vars
+            )
+            if self.testing:
+                return StopEvent(result=corr)
             attempts.append(corr.correction)
             await ctx.set("attempts", attempts)
             return CorrectionEvent()
