@@ -35,29 +35,35 @@ train_col, test_col = st.columns([1, 1], vertical_alignment="top", gap="medium")
 
 with train_col:
     st.subheader("Train Examples")
-    with st.container(border=True):
+    with st.container(border=True, height=800):
         left, right = st.columns([1, 1], vertical_alignment="top", gap="medium")
         with left:
             st.subheader("Input")
             selected_task = st.session_state.selected_task
             task = sample_tasks.get(selected_task, None)
             if task:
-                grid = task["train"][1]["input"]
-                fig = px.imshow(grid, text_auto=True)
-                fig.update_coloraxes(showscale=False)
-                fig.update_layout(yaxis={"visible": False}, xaxis={"visible": False})
-                st.plotly_chart(fig, use_container_width=True)
+                for ix, ex in enumerate(task["train"]):
+                    grid = ex["input"]
+                    fig = px.imshow(grid, text_auto=True)
+                    fig.update_coloraxes(showscale=False)
+                    fig.update_layout(
+                        yaxis={"visible": False}, xaxis={"visible": False}
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
 
         with right:
             st.subheader("Output")
             selected_task = st.session_state.selected_task
             task = sample_tasks.get(selected_task, None)
             if task:
-                grid = task["train"][1]["output"]
-                fig = px.imshow(grid, text_auto=True)
-                fig.update_coloraxes(showscale=False)
-                fig.update_layout(yaxis={"visible": False}, xaxis={"visible": False})
-                st.plotly_chart(fig, use_container_width=True)
+                for ex in task["train"]:
+                    grid = ex["output"]
+                    fig = px.imshow(grid, text_auto=True)
+                    fig.update_coloraxes(showscale=False)
+                    fig.update_layout(
+                        yaxis={"visible": False}, xaxis={"visible": False}
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
 
 with test_col:
     st.subheader("Test Example")
