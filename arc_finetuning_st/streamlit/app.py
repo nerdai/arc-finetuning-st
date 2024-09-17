@@ -16,19 +16,6 @@ with st.container():
 
 train_col, test_col = st.columns([1, 1], vertical_alignment="top", gap="medium")
 
-with test_col:
-    with st.container(border=True):
-        left, right = st.columns([1, 1], vertical_alignment="top", gap="medium")
-        with left:
-            st.subheader("Input")
-            _ = st.container(border=True, height=300)
-
-        with right:
-            st.subheader("Output Prediction")
-            _ = st.container(border=True, height=300)
-        st.text_area(label="Critique", placeholder="Enter critique.")
-        st.button("predict", type="primary")
-
 with train_col:
     st.subheader("Train Examples")
     with st.container(border=True):
@@ -40,3 +27,17 @@ with train_col:
         with right:
             st.subheader("Output Prediction")
             _ = st.container(border=True, height=300)
+
+with test_col:
+    st.subheader("Test Example")
+    with st.container(border=True):
+        left, right = st.columns([1, 1], vertical_alignment="top", gap="medium")
+        with left:
+            st.subheader("Input")
+            _ = st.container(border=True, height=300)
+
+        with right:
+            st.subheader("Output Prediction")
+            _ = st.container(border=True, height=300)
+        st.text_area(label="Critique", placeholder="Enter critique.")
+        st.button("predict", type="primary")
