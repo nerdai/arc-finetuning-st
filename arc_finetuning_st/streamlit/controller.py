@@ -1,11 +1,19 @@
+import asyncio
 import logging
 import streamlit as st
 import plotly.express as px
 from typing import Any, Optional, List, Literal
 
+from llama_index.llms.openai import OpenAI
 from llama_deploy.control_plane import ControlPlaneConfig
 
 from arc_finetuning_st.streamlit.examples import sample_tasks
+from arc_finetuning_st.workflows.prompts import Prediction
+from arc_finetuning_st.workflows.arc_task_solver import (
+    ARCTaskSolverWorkflow,
+    WorkflowOutput,
+)
+from arc_finetuning_st.workflows.human_input import HumanInputWorkflow, HumanInputFn
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +56,15 @@ class Controller:
         selected_task = st.session_state.selected_task
         task = sample_tasks.get(selected_task, None)
         if task:
-            grid = task["test"][0]["output"]
+            w = ARCTaskSolverWorkflow(
+                timeout=None, verbose=False, llm=OpenAI("gpt-4o"), max_attempts=1
+            )
+            w.add_workflows(human_input_workflow=HumanInputWorkflow())
+            res: WorkflowOutput = asyncio.run(w.run(task=task))
+            final_attempt: Prediction = res.attempts[-1]
+            grid = Prediction.prediction_str_to_int_array(
+                prediction=final_attempt.prediction
+            )
             fig = Controller.plot_grid(grid, kind="prediction")
             st.session_state.prediction = fig
+            st.session_state.critique = final_attempt.rationale

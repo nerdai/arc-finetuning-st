@@ -26,6 +26,7 @@ with st.sidebar:
         options=sample_tasks.keys(),
         placeholder="Select a task.",
         index=None,
+        on_change=controller.handle_selectbox_selection,
         key="selected_task",
     )
 
@@ -85,7 +86,13 @@ with test_col:
                                 use_container_width=True,
                                 key="prediction",
                             )
-        st.text_area(label="Critique", placeholder="Enter critique.")
+        critique = st.session_state.get("critique", None)
+        st.text_area(
+            value=critique,
+            label="Critique",
+            placeholder="Enter critique.",
+            key="critique",
+        )
         st.button(
             "predict", type="primary", on_click=controller.handle_prediction_click
         )

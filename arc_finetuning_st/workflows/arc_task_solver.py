@@ -37,15 +37,15 @@ OUTPUT:
 
 class WorkflowOutput(BaseModel):
     passing: bool
-    attempts: List[str]
+    attempts: List[Prediction]
 
 
 class ARCTaskSolverWorkflow(Workflow):
 
-    def __init__(self, llm: LLM, **kwargs) -> None:
+    def __init__(self, llm: LLM, max_attempts: int = 3, **kwargs) -> None:
         super().__init__(**kwargs)
         self.llm = llm
-        self._max_attempts = 3
+        self._max_attempts = max_attempts
 
     @step
     async def format_task(self, ctx: Context, ev: StartEvent) -> FormatTaskEvent:
@@ -82,7 +82,7 @@ class ARCTaskSolverWorkflow(Workflow):
         pred: Prediction = await self.llm.astructured_predict(
             Prediction, PREDICTION_PROMPT_TEMPLATE, **prompt_vars
         )
-        attempts = [pred.prediction]
+        attempts = [pred]
         await ctx.set("attempts", attempts)
         return PredictionEvent()
 
@@ -91,8 +91,9 @@ class ARCTaskSolverWorkflow(Workflow):
         self, ctx: Context, ev: PredictionEvent | CorrectionEvent
     ) -> EvaluationEvent:
         task = await ctx.get("task")
-        attempts = await ctx.get("attempts")
-        prediction_str = attempts[-1]
+        attempts: List[Prediction] = await ctx.get("attempts")
+        final_attempt = attempts[-1]
+        prediction_str = final_attempt.prediction
         prediction = Prediction.prediction_str_to_int_array(prediction_str)
         ground_truth = task["test"][0]["output"]
 
@@ -115,29 +116,33 @@ class ARCTaskSolverWorkflow(Workflow):
                 Critique, REFLECTION_PROMPT_TEMPLATE, **prompt_vars
             )
 
-            # work with human on critique
-            human_prompt = (
-                "\n\nA critique of the past incorrect prediction has been generated. "
-                "\nCRITIQUE:\n\n"
-                f"{critique_model.critique}"
-                "\n\nIf you'd like to correct the critique, enter a new one now. "
-                "Otherwise, return nothing.\n\n"
-                "New critique:\n\n"
-            )
-            human_input = await human_input_workflow.run(
-                prompt=human_prompt,
-                rationale=critique_model.critique,
-                prediction=attempts[-1],
-            )
-            if human_input:
-                critique_model.critique = human_input
+            # # work with human on critique
+            # human_prompt = (
+            #     "\n\nA critique of the past incorrect prediction has been generated. "
+            #     "\nCRITIQUE:\n\n"
+            #     f"{critique_model.critique}"
+            #     "\n\nIf you'd like to correct the critique, enter a new one now. "
+            #     "Otherwise, return nothing.\n\n"
+            #     "New critique:\n\n"
+            # )
+            # human_input = await human_input_workflow.run(
+            #     prompt=human_prompt,
+            #     rationale=critique_model.critique,
+            #     prediction=attempts[-1],
+            # )
+            # if human_input:
+            #     critique_model.critique = human_input
 
             # generate correction
             prompt_vars.update(critique=critique_model.critique)
             corr: Correction = await self.llm.astructured_predict(
                 Correction, CORRECTION_PROMPT_TEMPLATE, **prompt_vars
             )
-            attempts.append(corr.correction)
+            attempts.append(
+                Prediction(
+                    rationale=critique_model.critique, prediction=corr.correction
+                )
+            )
             await ctx.set("attempts", attempts)
             return CorrectionEvent()
 
