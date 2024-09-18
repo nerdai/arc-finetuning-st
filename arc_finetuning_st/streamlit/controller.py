@@ -5,6 +5,8 @@ from typing import Any, Optional, List, Literal
 
 from llama_deploy.control_plane import ControlPlaneConfig
 
+from arc_finetuning_st.streamlit.examples import sample_tasks
+
 logger = logging.getLogger(__name__)
 
 
@@ -16,8 +18,8 @@ class Controller:
 
     def handle_selectbox_selection(self):
         """Handle selection of ARC task."""
-        selected_task = st.session_state.get("selected_task")
-        print(selected_task)
+        # clear prediction
+        st.session_state.prediction = None
 
     @staticmethod
     def plot_grid(
@@ -40,3 +42,12 @@ class Controller:
             ),
         )
         return fig
+
+    def handle_prediction_click(self) -> None:
+        """Run workflow to generate prediction."""
+        selected_task = st.session_state.selected_task
+        task = sample_tasks.get(selected_task, None)
+        if task:
+            grid = task["test"][0]["output"]
+            fig = Controller.plot_grid(grid, kind="prediction")
+            st.session_state.prediction = fig

@@ -26,7 +26,6 @@ with st.sidebar:
         options=sample_tasks.keys(),
         placeholder="Select a task.",
         index=None,
-        on_change=controller.handle_selectbox_selection,
         key="selected_task",
     )
 
@@ -34,39 +33,59 @@ train_col, test_col = st.columns([1, 1], vertical_alignment="top", gap="medium")
 
 with train_col:
     st.subheader("Train Examples")
-    with st.container(border=True, height=800):
-        left, right = st.columns([1, 1], vertical_alignment="top", gap="medium")
-        with left:
-            selected_task = st.session_state.selected_task
-            task = sample_tasks.get(selected_task, None)
-            if task:
-                for ix, ex in enumerate(task["train"]):
-                    grid = ex["input"]
-                    fig = Controller.plot_grid(grid, kind="input")
-                    st.plotly_chart(fig, use_container_width=True)
+    with st.container():
+        selected_task = st.session_state.selected_task
+        task = sample_tasks.get(selected_task, None)
 
-        with right:
-            selected_task = st.session_state.selected_task
-            task = sample_tasks.get(selected_task, None)
-            if task:
-                for ex in task["train"]:
-                    grid = ex["output"]
-                    fig = Controller.plot_grid(grid, kind="output")
-                    st.plotly_chart(fig, use_container_width=True)
+        if task:
+            num_examples = len(task["train"])
+            tabs = st.tabs([f"Example {ix}" for ix in range(1, num_examples + 1)])
+            for ix, tab in enumerate(tabs):
+                with tab:
+                    left, right = st.columns(
+                        [1, 1], vertical_alignment="top", gap="medium"
+                    )
+                    with left:
+                        ex = task["train"][ix]
+                        grid = ex["input"]
+                        fig = Controller.plot_grid(grid, kind="input")
+                        st.plotly_chart(fig, use_container_width=True)
+
+                    with right:
+                        ex = task["train"][ix]
+                        grid = ex["output"]
+                        fig = Controller.plot_grid(grid, kind="input")
+                        st.plotly_chart(fig, use_container_width=True)
 
 with test_col:
-    st.subheader("Test Example")
-    with st.container(border=True):
-        left, right = st.columns([1, 1], vertical_alignment="top", gap="medium")
-        with left:
-            selected_task = st.session_state.selected_task
-            task = sample_tasks.get(selected_task, None)
-            if task:
-                grid = task["test"][0]["input"]
-                fig = Controller.plot_grid(grid, kind="input")
-                st.plotly_chart(fig, use_container_width=True)
+    st.subheader("Test")
+    with st.container():
+        selected_task = st.session_state.selected_task
+        task = sample_tasks.get(selected_task, None)
 
-        with right:
-            _ = st.container(border=True, height=300)
+        if task:
+            num_cases = len(task["test"])
+            tabs = st.tabs([f"Test Case {ix}" for ix in range(1, num_cases + 1)])
+            for ix, tab in enumerate(tabs):
+                with tab:
+                    left, right = st.columns(
+                        [1, 1], vertical_alignment="top", gap="medium"
+                    )
+                    with left:
+                        ex = task["test"][ix]
+                        grid = ex["input"]
+                        fig = Controller.plot_grid(grid, kind="input")
+                        st.plotly_chart(fig, use_container_width=True)
+
+                    with right:
+                        prediction_fig = st.session_state.get("prediction", None)
+                        if prediction_fig:
+                            st.plotly_chart(
+                                prediction_fig,
+                                use_container_width=True,
+                                key="prediction",
+                            )
         st.text_area(label="Critique", placeholder="Enter critique.")
-        st.button("predict", type="primary")
+        st.button(
+            "predict", type="primary", on_click=controller.handle_prediction_click
+        )
