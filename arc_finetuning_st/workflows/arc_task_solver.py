@@ -116,22 +116,21 @@ class ARCTaskSolverWorkflow(Workflow):
                 Critique, REFLECTION_PROMPT_TEMPLATE, **prompt_vars
             )
 
-            # # work with human on critique
-            # human_prompt = (
-            #     "\n\nA critique of the past incorrect prediction has been generated. "
-            #     "\nCRITIQUE:\n\n"
-            #     f"{critique_model.critique}"
-            #     "\n\nIf you'd like to correct the critique, enter a new one now. "
-            #     "Otherwise, return nothing.\n\n"
-            #     "New critique:\n\n"
-            # )
-            # human_input = await human_input_workflow.run(
-            #     prompt=human_prompt,
-            #     rationale=critique_model.critique,
-            #     prediction=attempts[-1],
-            # )
-            # if human_input:
-            #     critique_model.critique = human_input
+            human_prompt = (
+                "\n\nA critique of the past incorrect prediction has been generated. "
+                "\nCRITIQUE:\n\n"
+                f"{critique_model.critique}"
+                "\n\nIf you'd like to correct the critique, enter a new one now. "
+                "Otherwise, return nothing.\n\n"
+                "New critique:\n\n"
+            )
+            human_input = await human_input_workflow.run(
+                prompt=human_prompt,
+                critique=critique_model.critique,
+                prediction_str=attempts[-1].prediction,
+            )
+            if human_input:
+                critique_model.critique = human_input
 
             # generate correction
             prompt_vars.update(critique=critique_model.critique)

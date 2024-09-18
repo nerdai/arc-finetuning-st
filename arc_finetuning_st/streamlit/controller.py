@@ -51,15 +51,28 @@ class Controller:
         )
         return fig
 
+    @staticmethod
+    async def human_input(prompt: str, **kwargs: Any) -> str:
+        critique = kwargs.get("critique", None)
+        prediction_str = kwargs.get("prediction_str", None)
+        grid = Prediction.prediction_str_to_int_array(prediction=prediction_str)
+        fig = Controller.plot_grid(grid, kind="prediction")
+        st.session_state.prediction = fig
+        st.session_state.critique += f"LLM<br><sup>CRITIQUE</sup><br><br>{critique}"
+        st.session_state.passing = False
+
     def handle_prediction_click(self) -> None:
         """Run workflow to generate prediction."""
         selected_task = st.session_state.selected_task
         task = sample_tasks.get(selected_task, None)
         if task:
             w = ARCTaskSolverWorkflow(
-                timeout=None, verbose=False, llm=OpenAI("gpt-4o"), max_attempts=1
+                timeout=None, verbose=False, llm=OpenAI("gpt-4o"), max_attempts=2
             )
-            w.add_workflows(human_input_workflow=HumanInputWorkflow())
+            w.add_workflows(
+                human_input_workflow=HumanInputWorkflow(input=Controller.human_input)
+            )
+
             res: WorkflowOutput = asyncio.run(w.run(task=task))
             final_attempt: Prediction = res.attempts[-1]
             grid = Prediction.prediction_str_to_int_array(
@@ -68,3 +81,4 @@ class Controller:
             fig = Controller.plot_grid(grid, kind="prediction")
             st.session_state.prediction = fig
             st.session_state.critique = final_attempt.rationale
+            st.session_state.passing = res.passing

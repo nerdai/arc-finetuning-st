@@ -17,8 +17,16 @@ def startup() -> Tuple[Controller,]:
 (controller,) = startup()
 
 
+if "critique" not in st.session_state:
+    st.session_state["critique"] = ""
+if "passing" not in st.session_state:
+    st.session_state["passing"] = None
+if "logs" not in st.session_state:
+    st.session_state["logs"] = ""
+
 logo = '[<img src="https://d3ddy8balm3goa.cloudfront.net/llamaindex/LlamaLogoSquare.png" width="28" height="28" />](https://github.com/run-llama/llama-agents "Check out the llama-agents Github repo!")'
 st.title("ARC Task Solver Workflow with Human Input")
+
 
 with st.sidebar:
     task_selection = st.selectbox(
@@ -59,7 +67,15 @@ with train_col:
                         st.plotly_chart(fig, use_container_width=True)
 
 with test_col:
-    st.subheader("Test")
+    header_col, start_col = st.columns([5, 1], vertical_alignment="bottom", gap="small")
+    with header_col:
+        st.subheader("Test")
+    with start_col:
+        st.button(
+            "start",
+            on_click=controller.handle_prediction_click,
+            use_container_width=True,
+        )
     with st.container():
         selected_task = st.session_state.selected_task
         task = sample_tasks.get(selected_task, None)
@@ -86,13 +102,27 @@ with test_col:
                                 use_container_width=True,
                                 key="prediction",
                             )
-        critique = st.session_state.get("critique", None)
-        st.text_area(
-            value=critique,
-            label="Critique",
-            placeholder="Enter critique.",
-            key="critique",
-        )
-        st.button(
-            "predict", type="primary", on_click=controller.handle_prediction_click
-        )
+
+        with st.container():
+            # metric
+            passing = st.session_state.get("passing")
+            if passing is None:
+                metric_value = "N/A"
+            elif passing == True:
+                metric_value = "✅"
+            else:
+                metric_value = "❌"
+
+            st.metric(label="Passing", value=metric_value)
+
+            # logs
+            logs = st.popover("logs", use_container_width=True)
+            with logs:
+                stdout = st.session_state.get("logs", None)
+                if stdout:
+                    st.code(stdout)
+
+            # console
+            critique = st.session_state.get("critique", None)
+            if critique:
+                st.markdown(body=critique, unsafe_allow_html=True)

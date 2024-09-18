@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from llama_index.core.prompts import PromptTemplate
 from llama_index.core.bridge.pydantic import BaseModel, Field
 
