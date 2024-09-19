@@ -34,12 +34,11 @@ st.title("ARC Task Solver Workflow with Human Input")
 
 
 with st.sidebar:
-    task_selection = st.selectbox(
-        label="Task",
-        options=sample_tasks.keys(),
-        placeholder="Select a task.",
+    task_selection = st.radio(
+        label="Tasks",
+        options=controller.task_file_names,
         index=None,
-        on_change=controller.handle_selectbox_selection,
+        on_change=controller.selectbox_selection_change_handler,
         key="selected_task",
     )
 
@@ -49,9 +48,8 @@ with train_col:
     st.subheader("Train Examples")
     with st.container():
         selected_task = st.session_state.selected_task
-        task = sample_tasks.get(selected_task, None)
-
-        if task:
+        if selected_task:
+            task = controller.load_task(selected_task)
             num_examples = len(task["train"])
             tabs = st.tabs([f"Example {ix}" for ix in range(1, num_examples + 1)])
             for ix, tab in enumerate(tabs):
@@ -105,9 +103,8 @@ with test_col:
         )
     with st.container():
         selected_task = st.session_state.selected_task
-        task = sample_tasks.get(selected_task, None)
-
-        if task:
+        if selected_task:
+            task = controller.load_task(selected_task)
             num_cases = len(task["test"])
             tabs = st.tabs([f"Test Case {ix}" for ix in range(1, num_cases + 1)])
             for ix, tab in enumerate(tabs):

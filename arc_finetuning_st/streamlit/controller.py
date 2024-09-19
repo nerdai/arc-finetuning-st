@@ -4,6 +4,8 @@ import streamlit as st
 import plotly.express as px
 import pandas as pd
 from typing import Any, Dict, Optional, List, Literal
+from pathlib import Path
+from os import listdir
 
 from llama_index.llms.openai import OpenAI
 
@@ -22,6 +24,8 @@ class Controller:
         self._handler = None
         self._attempts = []
         self._passing_results = []
+        parent_path = Path(__file__).parents[2].absolute()
+        self._data_path = Path(parent_path, "data", "training")
 
     def reset(self):
         # clear prediction
@@ -36,8 +40,10 @@ class Controller:
         self._attempts = []
         self._passing_results = []
 
-    def handle_selectbox_selection(self):
-        """Handle selection of ARC task."""
+    def selectbox_selection_change_handler(self):
+        # only reset states
+        # loading of task is delegated to relevant calls made with each
+        # streamlit element
         self.reset()
 
     @staticmethod
@@ -87,8 +93,8 @@ class Controller:
     async def handle_prediction_click(self) -> None:
         """Run workflow to generate prediction."""
         selected_task = st.session_state.selected_task
-        task = sample_tasks.get(selected_task, None)
-        if task:
+        if selected_task:
+            task = self.load_task(selected_task)
             w = ARCTaskSolverWorkflow(timeout=None, verbose=False, llm=OpenAI("gpt-4o"))
 
             if not self._handler:  # start a new solver
@@ -135,6 +141,19 @@ class Controller:
             st.session_state.disable_start_button = True
             metric_value = "✅" if res.passing else "❌"
             st.session_state.metric_value = metric_value
+
+    @property
+    def task_file_names(self) -> List[str]:
+        return listdir(self._data_path)
+
+    def load_task(self, selected_task: str) -> Dict:
+        import json
+
+        task_path = Path(self._data_path, selected_task)
+
+        with open(task_path) as f:
+            task = json.load(f)
+        return task
 
     @property
     def passing(self) -> Optional[bool]:
