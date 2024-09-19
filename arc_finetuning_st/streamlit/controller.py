@@ -115,25 +115,36 @@ class Controller:
             attempt_number_list = []
             passings = []
             rationales = []
-            indices = []
+            predictions = []
             for ix, (a, passing) in enumerate(
                 zip(self._attempts, self._passing_results)
             ):
                 passings = ["✅" if passing else "❌"] + passings
                 rationales = [a.rationale] + rationales
-                indices = [ix] + indices
+                predictions = [a.prediction] + predictions
                 attempt_number_list = [ix + 1] + attempt_number_list
             return pd.DataFrame(
                 {
                     "attempt #": attempt_number_list,
                     "passing": passings,
                     "rationale": rationales,
-                    "index": indices,
+                    # hidden from UI
+                    "prediction": predictions,
                 }
             )
         return pd.DataFrame({})
 
     def handle_workflow_run_selection(self) -> None:
-        st.info(
-            f"DataframeSelectionState: {st.session_state.get('attempts_history_df')}"
+        selected_rows = (
+            st.session_state.get("attempts_history_df").get("selection").get("rows")
         )
+        if selected_rows:
+            row_ix = selected_rows[0]
+            df_row = self.attempts_history_df.iloc[row_ix]
+
+            grid = Prediction.prediction_str_to_int_array(
+                prediction=df_row["prediction"]
+            )
+            prediction_fig = Controller.plot_grid(grid, kind="prediction")
+            st.session_state.prediction = prediction_fig
+            st.session_state.critique = df_row["rationale"]
