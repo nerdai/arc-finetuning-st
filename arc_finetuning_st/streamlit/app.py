@@ -2,6 +2,8 @@ import plotly.express as px
 import streamlit as st
 from typing import Tuple
 
+from llama_index.core.tools.function_tool import async_to_sync
+
 from arc_finetuning_st.streamlit.controller import Controller
 from arc_finetuning_st.streamlit.examples import sample_tasks
 
@@ -75,7 +77,7 @@ with test_col:
     with start_col:
         st.button(
             "start",
-            on_click=controller.handle_prediction_click,
+            on_click=async_to_sync(controller.handle_prediction_click),
             use_container_width=True,
         )
     with st.container():
