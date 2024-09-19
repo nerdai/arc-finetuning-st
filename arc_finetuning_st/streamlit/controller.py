@@ -2,6 +2,7 @@ import asyncio
 import logging
 import streamlit as st
 import plotly.express as px
+import pandas as pd
 from typing import Any, Dict, Optional, List, Literal
 
 from llama_index.llms.openai import OpenAI
@@ -23,6 +24,8 @@ class Controller:
     ) -> None:
         self.control_plane_config = control_plane_config or ControlPlaneConfig()
         self._handler = None
+        self._attempts = []
+        self._passing_results = []
 
     def handle_selectbox_selection(self):
         """Handle selection of ARC task."""
@@ -85,41 +88,50 @@ class Controller:
 
             res: WorkflowOutput = await handler
             self._handler = handler
+            self._passing_results.append(res.passing)
+            self._attempts = res.attempts
 
             # update streamlit states
-            final_attempt: Prediction = res.attempts[-1]
             grid = Prediction.prediction_str_to_int_array(
-                prediction=final_attempt.prediction
+                prediction=res.attempts[-1].prediction
             )
-            fig = Controller.plot_grid(grid, kind="prediction")
-            st.session_state.prediction = fig
-            st.session_state.critique = final_attempt.rationale
-            passing_results = st.session_state.passing_results
-            st.session_state.passing_results = passing_results + [res.passing]
-            st.session_state.attempts = res.attempts
+            prediction_fig = Controller.plot_grid(grid, kind="prediction")
+            st.session_state.prediction = prediction_fig
+            st.session_state.critique = res.attempts[-1].rationale
             st.session_state.disable_continue_button = False
 
-    def prepare_attempts_history(
-        self, attempts: List[Prediction], passing_results: List[bool]
-    ) -> Dict:
+    @property
+    def passing(self) -> Optional[bool]:
+        if self._passing_results:
+            return self._passing_results[-1]
+        return
 
-        if attempts:
+    @property
+    def attempts_history_df(
+        self,
+    ) -> pd.DataFrame:
+
+        if self._attempts:
             attempt_number_list = []
             passings = []
             rationales = []
             indices = []
-            for ix, (a, passing) in enumerate(zip(attempts, passing_results)):
+            for ix, (a, passing) in enumerate(
+                zip(self._attempts, self._passing_results)
+            ):
                 passings = ["✅" if passing else "❌"] + passings
                 rationales = [a.rationale] + rationales
                 indices = [ix] + indices
                 attempt_number_list = [ix + 1] + attempt_number_list
-            return {
-                "attempt #": attempt_number_list,
-                "passing": passings,
-                "rationale": rationales,
-                "index": indices,
-            }
-        return {}
+            return pd.DataFrame(
+                {
+                    "attempt #": attempt_number_list,
+                    "passing": passings,
+                    "rationale": rationales,
+                    "index": indices,
+                }
+            )
+        return pd.DataFrame({})
 
     def handle_workflow_run_selection(self) -> None:
         st.info(

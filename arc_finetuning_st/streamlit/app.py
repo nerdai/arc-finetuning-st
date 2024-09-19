@@ -111,10 +111,10 @@ with test_col:
         with st.container():
             # metric
             passing_results = st.session_state.get("passing_results")
-            if not passing_results:
+            if not controller.passing:
                 metric_value = "N/A"
             else:
-                metric_value = "✅" if passing_results[-1] else "❌"
+                metric_value = "✅" if controller.passing else "❌"
 
             st.metric(label="Passing", value=metric_value)
 
@@ -129,14 +129,8 @@ with test_col:
                 key="continue_button",
             )
 
-            attempts = st.session_state.get("attempts")
-            attempts_history = controller.prepare_attempts_history(
-                attempts, passing_results
-            )
-
-            df = pd.DataFrame(attempts_history)
             st.dataframe(
-                df,
+                controller.attempts_history_df,
                 hide_index=True,
                 selection_mode="single-row",
                 on_select=controller.handle_workflow_run_selection,
