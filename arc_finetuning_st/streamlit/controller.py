@@ -22,6 +22,7 @@ class Controller:
         self, control_plane_config: Optional[ControlPlaneConfig] = None
     ) -> None:
         self.control_plane_config = control_plane_config or ControlPlaneConfig()
+        self._handler = None
 
     def handle_selectbox_selection(self):
         """Handle selection of ARC task."""
@@ -77,7 +78,15 @@ class Controller:
         if task:
             w = ARCTaskSolverWorkflow(timeout=None, verbose=False, llm=OpenAI("gpt-4o"))
 
-            res: WorkflowOutput = await w.run(task=task)
+            if not self._handler:
+                handler = w.run(task=task)
+            else:
+                handler = w.run(ctx=self._handler.ctx, task=task)
+
+            res: WorkflowOutput = await handler
+            self._handler = handler
+
+            # update streamlit states
             final_attempt: Prediction = res.attempts[-1]
             grid = Prediction.prediction_str_to_int_array(
                 prediction=final_attempt.prediction

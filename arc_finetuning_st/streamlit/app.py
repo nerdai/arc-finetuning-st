@@ -123,7 +123,7 @@ with test_col:
 
             st.button(
                 "continue",
-                on_click=controller.handle_prediction_click,
+                on_click=async_to_sync(controller.handle_prediction_click),
                 use_container_width=True,
                 disabled=st.session_state.get("disable_continue_button"),
                 key="continue_button",
