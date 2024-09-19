@@ -23,16 +23,22 @@ class Controller:
         self._attempts = []
         self._passing_results = []
 
-    def handle_selectbox_selection(self):
-        """Handle selection of ARC task."""
+    def reset(self):
         # clear prediction
         st.session_state.prediction = None
         st.session_state.disable_continue_button = True
+        st.session_state.disable_abort_button = True
+        st.session_state.disable_start_button = False
         st.session_state.critique = None
+        st.session_state.metric_value = "N/A"
 
         self._handler = None
         self._attempts = []
         self._passing_results = []
+
+    def handle_selectbox_selection(self):
+        """Handle selection of ARC task."""
+        self.reset()
 
     @staticmethod
     def plot_grid(
@@ -75,6 +81,9 @@ class Controller:
         st.info(f"got human input: {human_input}")
         return human_input
 
+    def handle_abort_click(self) -> None:
+        self.reset()
+
     async def handle_prediction_click(self) -> None:
         """Run workflow to generate prediction."""
         selected_task = st.session_state.selected_task
@@ -100,7 +109,7 @@ class Controller:
                 if selected_rows:
                     row_ix = selected_rows[0]
                     df_row = self.attempts_history_df.iloc[row_ix]
-                    prediction_str = df_row["prediction_str"]
+                    prediction_str = df_row["prediction"]
                     prompt_vars.update(predicted_output=prediction_str)
 
                 await self._handler.ctx.set("prompt_vars", prompt_vars)
@@ -122,6 +131,8 @@ class Controller:
             st.session_state.prediction = prediction_fig
             st.session_state.critique = prompt_vars["critique"]
             st.session_state.disable_continue_button = False
+            st.session_state.disable_abort_button = False
+            st.session_state.disable_start_button = True
             metric_value = "✅" if res.passing else "❌"
             st.session_state.metric_value = metric_value
 

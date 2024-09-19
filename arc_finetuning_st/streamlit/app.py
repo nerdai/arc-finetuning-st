@@ -26,6 +26,10 @@ if "logs" not in st.session_state:
     st.session_state["logs"] = ""
 if "disable_continue_button" not in st.session_state:
     st.session_state["disable_continue_button"] = True
+if "disable_start_button" not in st.session_state:
+    st.session_state["disable_start_button"] = False
+if "disable_abort_button" not in st.session_state:
+    st.session_state["disable_abort_button"] = True
 if "attempts" not in st.session_state:
     st.session_state["attempts"] = []
 if "metric_value" not in st.session_state:
@@ -73,8 +77,11 @@ with train_col:
                         fig = Controller.plot_grid(grid, kind="output")
                         st.plotly_chart(fig, use_container_width=True)
 
+
 with test_col:
-    header_col, start_col = st.columns([5, 1], vertical_alignment="bottom", gap="small")
+    header_col, start_col, abort_col = st.columns(
+        [4, 1, 1], vertical_alignment="bottom", gap="small"
+    )
     with header_col:
         st.subheader("Test")
     with start_col:
@@ -82,6 +89,25 @@ with test_col:
             "start",
             on_click=async_to_sync(controller.handle_prediction_click),
             use_container_width=True,
+            type="primary",
+            disabled=st.session_state.get("disable_start_button"),
+        )
+    with abort_col:
+
+        @st.dialog("Are you sure you want to abort the session?")
+        def abort_solving():
+            st.write(
+                f"Confirm that you want to abort the session by clicking 'confirm' button below."
+            )
+            if st.button("Confirm"):
+                controller.reset()
+                st.rerun()
+
+        st.button(
+            "abort",
+            on_click=abort_solving,
+            use_container_width=True,
+            disabled=st.session_state.get("disable_abort_button"),
         )
     with st.container():
         selected_task = st.session_state.selected_task
