@@ -20,14 +20,14 @@ def startup() -> Tuple[Controller,]:
 (controller,) = startup()
 
 
-if "passing" not in st.session_state:
-    st.session_state["passing"] = None
+if "passing_results" not in st.session_state:
+    st.session_state["passing_results"] = []
 if "logs" not in st.session_state:
     st.session_state["logs"] = ""
 if "disable_continue_button" not in st.session_state:
     st.session_state["disable_continue_button"] = True
 if "attempts" not in st.session_state:
-    st.session_state["attempts"] = {}
+    st.session_state["attempts"] = []
 
 logo = '[<img src="https://d3ddy8balm3goa.cloudfront.net/llamaindex/LlamaLogoSquare.png" width="28" height="28" />](https://github.com/run-llama/llama-agents "Check out the llama-agents Github repo!")'
 st.title("ARC Task Solver Workflow with Human Input")
@@ -110,13 +110,11 @@ with test_col:
 
         with st.container():
             # metric
-            passing = st.session_state.get("passing")
-            if passing is None:
+            passing_results = st.session_state.get("passing_results")
+            if not passing_results:
                 metric_value = "N/A"
-            elif passing == True:
-                metric_value = "✅"
             else:
-                metric_value = "❌"
+                metric_value = "✅" if passing_results[-1] else "❌"
 
             st.metric(label="Passing", value=metric_value)
 
@@ -131,33 +129,21 @@ with test_col:
                 key="continue_button",
             )
 
-            df = pd.DataFrame(
-                {
-                    "name": ["Roadmap", "Extras", "Issues"],
-                    "url": [
-                        "https://roadmap.streamlit.app",
-                        "https://extras.streamlit.app",
-                        "https://issues.streamlit.app",
-                    ],
-                    "stars": [random.randint(0, 1000) for _ in range(3)],
-                    "views_history": [
-                        [random.randint(0, 5000) for _ in range(30)] for _ in range(3)
-                    ],
-                }
+            attempts = st.session_state.get("attempts")
+            attempts_history = controller.prepare_attempts_history(
+                attempts, passing_results
             )
+
+            df = pd.DataFrame(attempts_history)
             st.dataframe(
                 df,
-                column_config={
-                    "name": "App name",
-                    "stars": st.column_config.NumberColumn(
-                        "Github Stars",
-                        help="Number of stars on GitHub",
-                        format="%d ⭐",
-                    ),
-                    "url": st.column_config.LinkColumn("App URL"),
-                    "views_history": st.column_config.LineChartColumn(
-                        "Views (past 30 days)", y_min=0, y_max=5000
-                    ),
-                },
                 hide_index=True,
+                selection_mode="single-row",
+                on_select=controller.handle_workflow_run_selection,
+                column_order=(
+                    "attempt #",
+                    "passing",
+                    "rationale",
+                ),
+                key="attempts_history_df",
             )
