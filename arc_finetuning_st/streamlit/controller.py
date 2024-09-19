@@ -28,6 +28,7 @@ class Controller:
         """Handle selection of ARC task."""
         # clear prediction
         st.session_state.prediction = None
+        st.session_state.disable_continue_button = True
 
     @staticmethod
     def plot_grid(
@@ -52,14 +53,24 @@ class Controller:
         return fig
 
     @staticmethod
+    async def get_human_input() -> str:
+        asyncio.sleep(3)
+        return "got human input"
+
+    @staticmethod
     async def human_input(prompt: str, **kwargs: Any) -> str:
+        st.session_state.disable_continue_button = False
+
         critique = kwargs.get("critique", None)
         prediction_str = kwargs.get("prediction_str", None)
         grid = Prediction.prediction_str_to_int_array(prediction=prediction_str)
         fig = Controller.plot_grid(grid, kind="prediction")
         st.session_state.prediction = fig
-        st.session_state.critique += f"LLM<br><sup>CRITIQUE</sup><br><br>{critique}"
         st.session_state.passing = False
+
+        human_input = await asyncio.wait_for(Controller.get_human_input(), timeout=10)
+        st.info(f"got human input: {human_input}")
+        return human_input
 
     def handle_prediction_click(self) -> None:
         """Run workflow to generate prediction."""
@@ -74,11 +85,11 @@ class Controller:
             )
 
             res: WorkflowOutput = asyncio.run(w.run(task=task))
-            final_attempt: Prediction = res.attempts[-1]
-            grid = Prediction.prediction_str_to_int_array(
-                prediction=final_attempt.prediction
-            )
-            fig = Controller.plot_grid(grid, kind="prediction")
-            st.session_state.prediction = fig
-            st.session_state.critique = final_attempt.rationale
-            st.session_state.passing = res.passing
+            # final_attempt: Prediction = res.attempts[-1]
+            # grid = Prediction.prediction_str_to_int_array(
+            #     prediction=final_attempt.prediction
+            # )
+            # fig = Controller.plot_grid(grid, kind="prediction")
+            # st.session_state.prediction = fig
+            # st.session_state.critique = final_attempt.rationale
+            # st.session_state.passing = res.passing

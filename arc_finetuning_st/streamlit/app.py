@@ -17,12 +17,14 @@ def startup() -> Tuple[Controller,]:
 (controller,) = startup()
 
 
-if "critique" not in st.session_state:
-    st.session_state["critique"] = ""
 if "passing" not in st.session_state:
     st.session_state["passing"] = None
 if "logs" not in st.session_state:
     st.session_state["logs"] = ""
+if "disable_continue_button" not in st.session_state:
+    st.session_state["disable_continue_button"] = True
+if "clicked" not in st.session_state:
+    st.session_state.clicked = False
 
 logo = '[<img src="https://d3ddy8balm3goa.cloudfront.net/llamaindex/LlamaLogoSquare.png" width="28" height="28" />](https://github.com/run-llama/llama-agents "Check out the llama-agents Github repo!")'
 st.title("ARC Task Solver Workflow with Human Input")
@@ -63,7 +65,7 @@ with train_col:
                     with right:
                         ex = task["train"][ix]
                         grid = ex["output"]
-                        fig = Controller.plot_grid(grid, kind="input")
+                        fig = Controller.plot_grid(grid, kind="output")
                         st.plotly_chart(fig, use_container_width=True)
 
 with test_col:
@@ -115,14 +117,13 @@ with test_col:
 
             st.metric(label="Passing", value=metric_value)
 
-            # logs
-            logs = st.popover("logs", use_container_width=True)
-            with logs:
-                stdout = st.session_state.get("logs", None)
-                if stdout:
-                    st.code(stdout)
-
             # console
-            critique = st.session_state.get("critique", None)
-            if critique:
-                st.markdown(body=critique, unsafe_allow_html=True)
+            st.text_area(label="human input", key="critique")
+
+            st.button(
+                "continue",
+                on_click=controller.handle_prediction_click,
+                use_container_width=True,
+                disabled=st.session_state.get("disable_continue_button"),
+                key="continue_button",
+            )
