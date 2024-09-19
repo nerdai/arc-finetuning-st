@@ -142,7 +142,15 @@ with test_col:
             st.metric(label="Passing", value=metric_value)
 
             # console
-            st.text_area(label="human input", key="critique")
+            st.text_area(
+                label="Critique of prediction",
+                key="critique",
+                help=(
+                    "An LLM was prompted to critique the prediction on why it might not fit the pattern. "
+                    "This critique is passed in the PROMPT in the next prediction attempt. "
+                    "Feel free to make edits to the critique or use your own."
+                ),
+            )
 
             st.button(
                 "continue",
