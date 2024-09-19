@@ -123,9 +123,11 @@ class ARCTaskSolverWorkflow(Workflow):
 
         # check if passing
         if not ev.passing:
-            attempts = await ctx.get("attempts")
+            attempts: List[Prediction] = await ctx.get("attempts")
             prompt_vars = await ctx.get("prompt_vars")
-            prompt_vars.update(predicted_output=attempts[-1])  # use last attempt
+            prompt_vars.update(
+                predicted_output=attempts[-1].prediction
+            )  # use last attempt
 
             # generate critique
             critique_model: Critique = await self.llm.astructured_predict(
