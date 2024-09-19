@@ -28,6 +28,8 @@ if "disable_continue_button" not in st.session_state:
     st.session_state["disable_continue_button"] = True
 if "attempts" not in st.session_state:
     st.session_state["attempts"] = []
+if "metric_value" not in st.session_state:
+    st.session_state["metric_value"] = "N/A"
 
 logo = '[<img src="https://d3ddy8balm3goa.cloudfront.net/llamaindex/LlamaLogoSquare.png" width="28" height="28" />](https://github.com/run-llama/llama-agents "Check out the llama-agents Github repo!")'
 st.title("ARC Task Solver Workflow with Human Input")
@@ -110,11 +112,7 @@ with test_col:
 
         with st.container():
             # metric
-            if controller.passing is None:
-                metric_value = "N/A"
-            else:
-                metric_value = "✅" if controller.passing else "❌"
-
+            metric_value = st.session_state.get("metric_value")
             st.metric(label="Passing", value=metric_value)
 
             # console

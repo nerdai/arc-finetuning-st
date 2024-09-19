@@ -114,13 +114,16 @@ class Controller:
             self._attempts = res.attempts
 
             # update streamlit states
+            prompt_vars = await self._handler.ctx.get("prompt_vars")
             grid = Prediction.prediction_str_to_int_array(
                 prediction=res.attempts[-1].prediction
             )
             prediction_fig = Controller.plot_grid(grid, kind="prediction")
             st.session_state.prediction = prediction_fig
-            st.session_state.critique = res.attempts[-1].rationale
+            st.session_state.critique = prompt_vars["critique"]
             st.session_state.disable_continue_button = False
+            metric_value = "✅" if res.passing else "❌"
+            st.session_state.metric_value = metric_value
 
     @property
     def passing(self) -> Optional[bool]:
@@ -170,3 +173,5 @@ class Controller:
             prediction_fig = Controller.plot_grid(grid, kind="prediction")
             st.session_state.prediction = prediction_fig
             st.session_state.critique = df_row["rationale"]
+            metric_value = df_row["passing"]
+            st.session_state.metric_value = metric_value
