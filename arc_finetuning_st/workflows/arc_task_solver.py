@@ -13,15 +13,12 @@ from arc_finetuning_st.workflows.events import (
     PredictionEvent,
     EvaluationEvent,
 )
-from arc_finetuning_st.workflows.human_input import HumanInputWorkflow
 from arc_finetuning_st.workflows.prompts import (
     REFLECTION_PROMPT_TEMPLATE,
     PREDICTION_PROMPT_TEMPLATE,
     CORRECTION_PROMPT_TEMPLATE,
-    Prediction,
-    Critique,
-    Correction,
 )
+from arc_finetuning_st.workflows.models import Prediction, Correction, Critique
 
 example_template = """===
 EXAMPLE

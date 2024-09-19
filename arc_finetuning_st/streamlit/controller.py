@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional, List, Literal
 from llama_index.llms.openai import OpenAI
 
 from arc_finetuning_st.streamlit.examples import sample_tasks
-from arc_finetuning_st.workflows.prompts import Prediction
+from arc_finetuning_st.workflows.models import Prediction
 from arc_finetuning_st.workflows.arc_task_solver import (
     ARCTaskSolverWorkflow,
     WorkflowOutput,

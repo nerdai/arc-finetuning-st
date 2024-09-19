@@ -20,18 +20,12 @@ def startup() -> Tuple[Controller,]:
 (controller,) = startup()
 
 
-if "passing_results" not in st.session_state:
-    st.session_state["passing_results"] = []
-if "logs" not in st.session_state:
-    st.session_state["logs"] = ""
 if "disable_continue_button" not in st.session_state:
     st.session_state["disable_continue_button"] = True
 if "disable_start_button" not in st.session_state:
     st.session_state["disable_start_button"] = False
 if "disable_abort_button" not in st.session_state:
     st.session_state["disable_abort_button"] = True
-if "attempts" not in st.session_state:
-    st.session_state["attempts"] = []
 if "metric_value" not in st.session_state:
     st.session_state["metric_value"] = "N/A"
 
