@@ -6,7 +6,6 @@ import pandas as pd
 from typing import Any, Dict, Optional, List, Literal
 
 from llama_index.llms.openai import OpenAI
-from llama_deploy.control_plane import ControlPlaneConfig
 
 from arc_finetuning_st.streamlit.examples import sample_tasks
 from arc_finetuning_st.workflows.prompts import Prediction
@@ -19,10 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class Controller:
-    def __init__(
-        self, control_plane_config: Optional[ControlPlaneConfig] = None
-    ) -> None:
-        self.control_plane_config = control_plane_config or ControlPlaneConfig()
+    def __init__(self) -> None:
         self._handler = None
         self._attempts = []
         self._passing_results = []
@@ -32,6 +28,11 @@ class Controller:
         # clear prediction
         st.session_state.prediction = None
         st.session_state.disable_continue_button = True
+        st.session_state.critique = None
+
+        self._handler = None
+        self._attempts = []
+        self._passing_results = []
 
     @staticmethod
     def plot_grid(
@@ -81,9 +82,30 @@ class Controller:
         if task:
             w = ARCTaskSolverWorkflow(timeout=None, verbose=False, llm=OpenAI("gpt-4o"))
 
-            if not self._handler:
+            if not self._handler:  # start a new solver
                 handler = w.run(task=task)
-            else:
+            else:  # continuing from past Workflow execution
+
+                # use the critique and prediction str from streamlit
+                critique = st.session_state.get("critique")
+                prompt_vars = await self._handler.ctx.get("prompt_vars")
+                prompt_vars.update(critique=critique)
+
+                # check if selected rows
+                selected_rows = (
+                    st.session_state.get("attempts_history_df")
+                    .get("selection")
+                    .get("rows")
+                )
+                if selected_rows:
+                    row_ix = selected_rows[0]
+                    df_row = self.attempts_history_df.iloc[row_ix]
+                    prediction_str = df_row["prediction_str"]
+                    prompt_vars.update(predicted_output=prediction_str)
+
+                await self._handler.ctx.set("prompt_vars", prompt_vars)
+
+                # run Workflow
                 handler = w.run(ctx=self._handler.ctx, task=task)
 
             res: WorkflowOutput = await handler

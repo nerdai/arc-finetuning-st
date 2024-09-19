@@ -110,8 +110,7 @@ with test_col:
 
         with st.container():
             # metric
-            passing_results = st.session_state.get("passing_results")
-            if not controller.passing:
+            if controller.passing is None:
                 metric_value = "N/A"
             else:
                 metric_value = "✅" if controller.passing else "❌"

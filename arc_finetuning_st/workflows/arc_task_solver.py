@@ -120,10 +120,10 @@ class ARCTaskSolverWorkflow(Workflow):
 
     @step
     async def reflection(self, ctx: Context, ev: EvaluationEvent) -> StopEvent:
+        attempts: List[Prediction] = await ctx.get("attempts")
 
         # check if passing
         if not ev.passing:
-            attempts: List[Prediction] = await ctx.get("attempts")
             prompt_vars = await ctx.get("prompt_vars")
             prompt_vars.update(
                 predicted_output=attempts[-1].prediction
