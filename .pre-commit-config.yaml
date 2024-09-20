@@ -45,7 +45,7 @@ repos:
       - id: mypy
         name: mypy
         pass_filenames: false
-        entry: bash -c 'mypy --config-file mypy.ini -p snowflake_cybersyn_demo "$@"' --
+        entry: bash -c 'mypy --config-file mypy.ini -p arc_finetuning_st "$@"' --
         additional_dependencies: ["types-PyYAML"]
   - repo: https://github.com/pappasam/toml-sort
     rev: v0.23.1
