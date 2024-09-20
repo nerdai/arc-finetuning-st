@@ -1,24 +1,26 @@
-from typing import Dict, List
+from typing import Any, Dict, List
+
 from llama_index.core.bridge.pydantic import BaseModel
+from llama_index.core.llms import LLM
 from llama_index.core.workflow import (
-    Workflow,
     Context,
     StartEvent,
     StopEvent,
+    Workflow,
     step,
 )
-from llama_index.core.llms import LLM
+
 from arc_finetuning_st.workflows.events import (
+    EvaluationEvent,
     FormatTaskEvent,
     PredictionEvent,
-    EvaluationEvent,
 )
+from arc_finetuning_st.workflows.models import Correction, Critique, Prediction
 from arc_finetuning_st.workflows.prompts import (
-    REFLECTION_PROMPT_TEMPLATE,
-    PREDICTION_PROMPT_TEMPLATE,
     CORRECTION_PROMPT_TEMPLATE,
+    PREDICTION_PROMPT_TEMPLATE,
+    REFLECTION_PROMPT_TEMPLATE,
 )
-from arc_finetuning_st.workflows.models import Prediction, Correction, Critique
 
 example_template = """===
 EXAMPLE
@@ -37,14 +39,15 @@ class WorkflowOutput(BaseModel):
 
 
 class ARCTaskSolverWorkflow(Workflow):
-
-    def __init__(self, llm: LLM, max_attempts: int = 3, **kwargs) -> None:
+    def __init__(self, llm: LLM, max_attempts: int = 3, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.llm = llm
         self._max_attempts = max_attempts
 
     @step
-    async def format_task(self, ctx: Context, ev: StartEvent) -> FormatTaskEvent:
+    async def format_task(
+        self, ctx: Context, ev: StartEvent
+    ) -> FormatTaskEvent:
         ctx.write_event_to_stream(ev)
 
         def _format_row(row: List[int]) -> str:
@@ -92,7 +95,8 @@ class ARCTaskSolverWorkflow(Workflow):
             )
             attempts.append(
                 Prediction(
-                    rationale=prompt_vars["critique"], prediction=corr.correction
+                    rationale=prompt_vars["critique"],
+                    prediction=corr.correction,
                 )
             )
         else:
@@ -106,7 +110,9 @@ class ARCTaskSolverWorkflow(Workflow):
         return PredictionEvent()
 
     @step
-    async def evaluation(self, ctx: Context, ev: PredictionEvent) -> EvaluationEvent:
+    async def evaluation(
+        self, ctx: Context, ev: PredictionEvent
+    ) -> EvaluationEvent:
         ctx.write_event_to_stream(ev)
         task = await ctx.get("task")
         attempts: List[Prediction] = await ctx.get("attempts")
@@ -142,9 +148,10 @@ class ARCTaskSolverWorkflow(Workflow):
         return StopEvent(result=result)
 
 
-async def _test_workflow():
+async def _test_workflow() -> None:
     import json
     from pathlib import Path
+
     from llama_index.llms.openai import OpenAI
 
     task_path = Path(
@@ -153,8 +160,9 @@ async def _test_workflow():
     with open(task_path) as f:
         task = json.load(f)
 
-    w = ARCTaskSolverWorkflow(timeout=None, verbose=False, llm=OpenAI("gpt-4o"))
-    w.add_workflows(human_input_workflow=HumanInputWorkflow())
+    w = ARCTaskSolverWorkflow(
+        timeout=None, verbose=False, llm=OpenAI("gpt-4o")
+    )
     attempts = await w.run(task=task)
 
     print(attempts)

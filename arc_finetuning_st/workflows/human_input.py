@@ -7,7 +7,8 @@ from llama_index.core.workflow import StartEvent, StopEvent, Workflow, step
 class HumanInputFn(Protocol):
     """Protocol for getting human input."""
 
-    def __call__(self, prompt: str, **kwargs: Any) -> Awaitable[str]: ...
+    def __call__(self, prompt: str, **kwargs: Any) -> Awaitable[str]:
+        ...
 
 
 async def default_human_input_fn(prompt: str, **kwargs: Any) -> str:
@@ -15,7 +16,9 @@ async def default_human_input_fn(prompt: str, **kwargs: Any) -> str:
 
 
 class HumanInputWorkflow(Workflow):
-    def __init__(self, input: HumanInputFn = default_human_input_fn, **kwargs: Any):
+    def __init__(
+        self, input: HumanInputFn = default_human_input_fn, **kwargs: Any
+    ):
         super().__init__(**kwargs)
         self.input = input
 

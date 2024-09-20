@@ -1,32 +1,33 @@
 import asyncio
 import logging
-import streamlit as st
-import plotly.express as px
-import pandas as pd
-from typing import Any, Dict, Optional, List, Literal
-from pathlib import Path
 from os import listdir
+from pathlib import Path
+from typing import Any, List, Literal, Optional, cast
 
+import pandas as pd
+import plotly.express as px
+import streamlit as st
+from llama_index.core.workflow.handler import WorkflowHandler
 from llama_index.llms.openai import OpenAI
 
-from arc_finetuning_st.workflows.models import Prediction
 from arc_finetuning_st.workflows.arc_task_solver import (
     ARCTaskSolverWorkflow,
     WorkflowOutput,
 )
+from arc_finetuning_st.workflows.models import Prediction
 
 logger = logging.getLogger(__name__)
 
 
 class Controller:
     def __init__(self) -> None:
-        self._handler = None
-        self._attempts = []
-        self._passing_results = []
+        self._handler: Optional[WorkflowHandler] = None
+        self._attempts: List[Prediction] = []
+        self._passing_results: List[bool] = []
         parent_path = Path(__file__).parents[2].absolute()
         self._data_path = Path(parent_path, "data", "training")
 
-    def reset(self):
+    def reset(self) -> None:
         # clear prediction
         st.session_state.prediction = None
         st.session_state.disable_continue_button = True
@@ -39,7 +40,7 @@ class Controller:
         self._attempts = []
         self._passing_results = []
 
-    def selectbox_selection_change_handler(self):
+    def selectbox_selection_change_handler(self) -> None:
         # only reset states
         # loading of task is delegated to relevant calls made with each
         # streamlit element
@@ -47,12 +48,14 @@ class Controller:
 
     @staticmethod
     def plot_grid(
-        grid: List[List[int]], kind=Literal["input", "output", "prediction"]
+        grid: List[List[int]], kind: Literal["input", "output", "prediction"]
     ) -> Any:
         m = len(grid)
         n = len(grid[0])
         fig = px.imshow(
-            grid, text_auto=True, labels={"x": f"{kind.title()}<br><sup>{m}x{n}</sup>"}
+            grid,
+            text_auto=True,
+            labels={"x": f"{kind.title()}<br><sup>{m}x{n}</sup>"},
         )
         fig.update_coloraxes(showscale=False)
         fig.update_layout(
@@ -67,7 +70,7 @@ class Controller:
         )
         return fig
 
-    async def show_progress_bar(self, handler) -> None:
+    async def show_progress_bar(self, handler: WorkflowHandler) -> None:
         progress_text_template = "{event} completed. Next step in progress."
         my_bar = st.progress(0, text="Workflow run in progress. Please wait.")
         num_steps = 5.0
@@ -88,13 +91,14 @@ class Controller:
         selected_task = st.session_state.selected_task
         if selected_task:
             task = self.load_task(selected_task)
-            w = ARCTaskSolverWorkflow(timeout=None, verbose=False, llm=OpenAI("gpt-4o"))
+            w = ARCTaskSolverWorkflow(
+                timeout=None, verbose=False, llm=OpenAI("gpt-4o")
+            )
 
             if not self._handler:  # start a new solver
                 handler = w.run(task=task)
 
             else:  # continuing from past Workflow execution
-
                 # need to reset this queue otherwise will use nested event loops
                 self._handler.ctx._streaming_queue = asyncio.Queue()
 
@@ -125,6 +129,7 @@ class Controller:
 
             res: WorkflowOutput = await handler
 
+            handler = cast(WorkflowHandler, handler)
             self._handler = handler
             self._passing_results.append(res.passing)
             self._attempts = res.attempts
@@ -147,7 +152,7 @@ class Controller:
     def task_file_names(self) -> List[str]:
         return listdir(self._data_path)
 
-    def load_task(self, selected_task: str) -> Dict:
+    def load_task(self, selected_task: str) -> Any:
         import json
 
         task_path = Path(self._data_path, selected_task)
@@ -160,18 +165,17 @@ class Controller:
     def passing(self) -> Optional[bool]:
         if self._passing_results:
             return self._passing_results[-1]
-        return
+        return None
 
     @property
     def attempts_history_df(
         self,
     ) -> pd.DataFrame:
-
         if self._attempts:
-            attempt_number_list = []
-            passings = []
-            rationales = []
-            predictions = []
+            attempt_number_list: List[int] = []
+            passings: List[str] = []
+            rationales: List[str] = []
+            predictions: List[str] = []
             for ix, (a, passing) in enumerate(
                 zip(self._attempts, self._passing_results)
             ):
@@ -192,7 +196,9 @@ class Controller:
 
     def handle_workflow_run_selection(self) -> None:
         selected_rows = (
-            st.session_state.get("attempts_history_df").get("selection").get("rows")
+            st.session_state.get("attempts_history_df")
+            .get("selection")
+            .get("rows")
         )
         if selected_rows:
             row_ix = selected_rows[0]

@@ -12,7 +12,7 @@ TEST INPUT:
 
 OUTPUT FORMAT:
 {{
-    "output": 
+    "output":
 }}
 
 Return your response in JSON format given above. DO NOT RETURN markdown code.

@@ -1,8 +1,6 @@
-import pandas as pd
-import random
-import streamlit as st
 from typing import Tuple
 
+import streamlit as st
 from llama_index.core.tools.function_tool import async_to_sync
 
 from arc_finetuning_st.streamlit.controller import Controller
@@ -41,7 +39,9 @@ with st.sidebar:
         key="selected_task",
     )
 
-train_col, test_col = st.columns([1, 1], vertical_alignment="top", gap="medium")
+train_col, test_col = st.columns(
+    [1, 1], vertical_alignment="top", gap="medium"
+)
 
 with train_col:
     st.subheader("Train Examples")
@@ -50,7 +50,9 @@ with train_col:
         if selected_task:
             task = controller.load_task(selected_task)
             num_examples = len(task["train"])
-            tabs = st.tabs([f"Example {ix}" for ix in range(1, num_examples + 1)])
+            tabs = st.tabs(
+                [f"Example {ix}" for ix in range(1, num_examples + 1)]
+            )
             for ix, tab in enumerate(tabs):
                 with tab:
                     left, right = st.columns(
@@ -86,9 +88,9 @@ with test_col:
     with abort_col:
 
         @st.dialog("Are you sure you want to abort the session?")
-        def abort_solving():
+        def abort_solving() -> None:
             st.write(
-                f"Confirm that you want to abort the session by clicking 'confirm' button below."
+                "Confirm that you want to abort the session by clicking 'confirm' button below."
             )
             if st.button("Confirm"):
                 controller.reset()
@@ -105,7 +107,9 @@ with test_col:
         if selected_task:
             task = controller.load_task(selected_task)
             num_cases = len(task["test"])
-            tabs = st.tabs([f"Test Case {ix}" for ix in range(1, num_cases + 1)])
+            tabs = st.tabs(
+                [f"Test Case {ix}" for ix in range(1, num_cases + 1)]
+            )
             for ix, tab in enumerate(tabs):
                 with tab:
                     left, right = st.columns(
@@ -118,7 +122,9 @@ with test_col:
                         st.plotly_chart(fig, use_container_width=True)
 
                     with right:
-                        prediction_fig = st.session_state.get("prediction", None)
+                        prediction_fig = st.session_state.get(
+                            "prediction", None
+                        )
                         if prediction_fig:
                             st.plotly_chart(
                                 prediction_fig,

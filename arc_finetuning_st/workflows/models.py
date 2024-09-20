@@ -1,4 +1,5 @@
-from typing import List, Optional
+from typing import List
+
 from llama_index.core.bridge.pydantic import BaseModel, Field
 
 
@@ -12,7 +13,9 @@ class Prediction(BaseModel):
 
     @staticmethod
     def prediction_str_to_int_array(prediction: str) -> List[List[int]]:
-        return [[int(a) for a in el.split(",")] for el in prediction.split("\n")]
+        return [
+            [int(a) for a in el.split(",")] for el in prediction.split("\n")
+        ]
 
 
 class Critique(BaseModel):

@@ -1,17 +1,17 @@
-from typing import List
-from llama_index.core.workflow import (
-    Event,
-)
+from llama_index.core.workflow import Event
 
 
-class FormatTaskEvent(Event): ...
+class FormatTaskEvent(Event):
+    ...
 
 
-class PredictionEvent(Event): ...
+class PredictionEvent(Event):
+    ...
 
 
 class EvaluationEvent(Event):
     passing: bool
 
 
-class CorrectionEvent(Event): ...
+class CorrectionEvent(Event):
+    ...
