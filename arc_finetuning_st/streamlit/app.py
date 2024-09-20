@@ -132,14 +132,39 @@ with test_col:
                                 key="prediction",
                             )
 
+        # metrics and past attempts
         with st.container():
-            # metric
-            metric_value = st.session_state.get("metric_value")
-            st.metric(label="Passing", value=metric_value)
+            metric_col, attempts_history_col = st.columns(
+                [1, 7], vertical_alignment="top"
+            )
+            with metric_col:
+                metric_value = st.session_state.get("metric_value")
+                st.markdown(body="Passing")
+                st.markdown(body=f"# {metric_value}")
 
+            with attempts_history_col:
+                st.markdown(body="Past Attempts")
+                st.dataframe(
+                    controller.attempts_history_df,
+                    hide_index=True,
+                    selection_mode="single-row",
+                    on_select=controller.handle_workflow_run_selection,
+                    column_order=(
+                        "attempt #",
+                        "passing",
+                        "critique",
+                        "rationale",
+                    ),
+                    key="attempts_history_df",
+                    use_container_width=True,
+                    height=100,
+                )
+
+        with st.container():
             # console
+            st.markdown(body="Critique of Attempt")
             st.text_area(
-                label="Critique of prediction",
+                label="This critique is passed to the LLM to generate a new prediction.",
                 key="critique",
                 help=(
                     "An LLM was prompted to critique the prediction on why it might not fit the pattern. "
@@ -148,24 +173,12 @@ with test_col:
                 ),
             )
 
+        # controls
+        with st.container():
             st.button(
                 "continue",
                 on_click=async_to_sync(controller.handle_prediction_click),
                 use_container_width=True,
                 disabled=st.session_state.get("disable_continue_button"),
                 key="continue_button",
-            )
-
-            st.dataframe(
-                controller.attempts_history_df,
-                hide_index=True,
-                selection_mode="single-row",
-                on_select=controller.handle_workflow_run_selection,
-                column_order=(
-                    "attempt #",
-                    "passing",
-                    "rationale",
-                    "critique",
-                ),
-                key="attempts_history_df",
             )

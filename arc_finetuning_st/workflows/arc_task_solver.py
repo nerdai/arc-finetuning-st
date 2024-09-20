@@ -172,6 +172,8 @@ class ARCTaskSolverWorkflow(Workflow):
 
             # update states
             latest_attempt.critique = critique
+        else:
+            latest_attempt.critique = "This predicted output is correct."
 
         latest_attempt.passing = ev.passing
         attempts[-1] = latest_attempt

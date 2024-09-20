@@ -178,7 +178,16 @@ class Controller:
                     "prediction": predictions,
                 }
             )
-        return pd.DataFrame({})
+        return pd.DataFrame(
+            {
+                "attempt #": [],
+                "passing": [],
+                "rationale": [],
+                "critique": [],
+                # hidden from UI
+                "prediction": [],
+            }
+        )
 
     def handle_workflow_run_selection(self) -> None:
         selected_rows = (
