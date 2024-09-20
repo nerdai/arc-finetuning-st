@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import uuid
 from os import listdir
 from pathlib import Path
 from typing import Any, List, Literal, Optional, cast
@@ -26,12 +27,14 @@ class Controller:
         self._passing_results: List[bool] = []
         parent_path = Path(__file__).parents[2].absolute()
         self._data_path = Path(parent_path, "data", "training")
+        self._attempts_history_df_key = str(uuid.uuid4())
 
     def reset(self) -> None:
         # clear prediction
         st.session_state.prediction = None
         st.session_state.disable_continue_button = True
         st.session_state.disable_abort_button = True
+        st.session_state.disable_preview_button = True
         st.session_state.disable_start_button = False
         st.session_state.critique = None
         st.session_state.metric_value = "N/A"
@@ -48,7 +51,8 @@ class Controller:
 
     @staticmethod
     def plot_grid(
-        grid: List[List[int]], kind: Literal["input", "output", "prediction"]
+        grid: List[List[int]],
+        kind: Literal["input", "output", "prediction", "latest prediction"],
     ) -> Any:
         m = len(grid)
         n = len(grid[0])
@@ -124,11 +128,14 @@ class Controller:
             grid = Prediction.prediction_str_to_int_array(
                 prediction=str(res.attempts[-1].prediction)
             )
-            prediction_fig = Controller.plot_grid(grid, kind="prediction")
+            prediction_fig = Controller.plot_grid(
+                grid, kind="latest prediction"
+            )
             st.session_state.prediction = prediction_fig
             st.session_state.critique = str(res.attempts[-1].critique)
             st.session_state.disable_continue_button = False
             st.session_state.disable_abort_button = False
+            st.session_state.disable_preview_button = False
             st.session_state.disable_start_button = True
             metric_value = "✅" if res.passing else "❌"
             st.session_state.metric_value = metric_value
@@ -151,6 +158,10 @@ class Controller:
         if self._passing_results:
             return self._passing_results[-1]
         return None
+
+    @property
+    def attempts_history_df_key(self) -> str:
+        return self._attempts_history_df_key
 
     @property
     def attempts_history_df(
@@ -190,11 +201,23 @@ class Controller:
         )
 
     def handle_workflow_run_selection(self) -> None:
+        @st.dialog("Past Attempt")
+        def _display_attempt(
+            fig: Any, rationale: str, critique: str, passing: bool
+        ) -> None:
+            st.plotly_chart(
+                prediction_fig,
+                use_container_width=True,
+                key="prediction",
+            )
+            st.write(rationale)
+
         selected_rows = (
             st.session_state.get("attempts_history_df")
             .get("selection")
             .get("rows")
         )
+
         if selected_rows:
             row_ix = selected_rows[0]
             df_row = self.attempts_history_df.iloc[row_ix]
@@ -203,7 +226,10 @@ class Controller:
                 prediction=df_row["prediction"]
             )
             prediction_fig = Controller.plot_grid(grid, kind="prediction")
-            st.session_state.prediction = prediction_fig
-            st.session_state.critique = df_row["critique"]
-            metric_value = df_row["passing"]
-            st.session_state.metric_value = metric_value
+
+            _display_attempt(
+                fig=prediction_fig,
+                rationale=df_row["rationale"],
+                critique=df_row["critique"],
+                passing=df_row["passing"],
+            )

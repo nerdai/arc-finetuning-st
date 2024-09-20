@@ -23,6 +23,8 @@ if "disable_start_button" not in st.session_state:
     st.session_state["disable_start_button"] = False
 if "disable_abort_button" not in st.session_state:
     st.session_state["disable_abort_button"] = True
+if "disable_preview_button" not in st.session_state:
+    st.session_state["disable_preview_button"] = True
 if "metric_value" not in st.session_state:
     st.session_state["metric_value"] = "N/A"
 
@@ -34,7 +36,7 @@ with st.sidebar:
     task_selection = st.radio(
         label="Tasks",
         options=controller.task_file_names,
-        index=None,
+        index=0,
         on_change=controller.selectbox_selection_change_handler,
         key="selected_task",
     )
@@ -72,8 +74,8 @@ with train_col:
 
 
 with test_col:
-    header_col, start_col, abort_col = st.columns(
-        [4, 1, 1], vertical_alignment="bottom", gap="small"
+    header_col, start_col, preview_col = st.columns(
+        [4, 1, 2], vertical_alignment="bottom", gap="small"
     )
     with header_col:
         st.subheader("Test")
@@ -85,23 +87,15 @@ with test_col:
             type="primary",
             disabled=st.session_state.get("disable_start_button"),
         )
-    with abort_col:
-
-        @st.dialog("Are you sure you want to abort the session?")
-        def abort_solving() -> None:
-            st.write(
-                "Confirm that you want to abort the session by clicking 'confirm' button below."
-            )
-            if st.button("Confirm"):
-                controller.reset()
-                st.rerun()
-
+    with preview_col:
         st.button(
-            "abort",
-            on_click=abort_solving,
+            "fine-tuning example",
+            on_click=async_to_sync(controller.handle_prediction_click),
             use_container_width=True,
-            disabled=st.session_state.get("disable_abort_button"),
+            disabled=st.session_state.get("disable_preview_button"),
+            key="preview_button",
         )
+
     with st.container():
         selected_task = st.session_state.selected_task
         if selected_task:
@@ -134,7 +128,7 @@ with test_col:
 
         # metrics and past attempts
         with st.container():
-            metric_col, attempts_history_col = st.columns(
+            metric_col, critique_col = st.columns(
                 [1, 7], vertical_alignment="top"
             )
             with metric_col:
@@ -142,43 +136,60 @@ with test_col:
                 st.markdown(body="Passing")
                 st.markdown(body=f"# {metric_value}")
 
-            with attempts_history_col:
-                st.markdown(body="Past Attempts")
-                st.dataframe(
-                    controller.attempts_history_df,
-                    hide_index=True,
-                    selection_mode="single-row",
-                    on_select=controller.handle_workflow_run_selection,
-                    column_order=(
-                        "attempt #",
-                        "passing",
-                        "critique",
-                        "rationale",
+            with critique_col:
+                st.markdown(body="Critique of Attempt")
+                st.text_area(
+                    label="This critique is passed to the LLM to generate a new prediction.",
+                    key="critique",
+                    help=(
+                        "An LLM was prompted to critique the prediction on why it might not fit the pattern. "
+                        "This critique is passed in the PROMPT in the next prediction attempt. "
+                        "Feel free to make edits to the critique or use your own."
                     ),
-                    key="attempts_history_df",
-                    use_container_width=True,
-                    height=100,
                 )
 
-        with st.container():
-            # console
-            st.markdown(body="Critique of Attempt")
-            st.text_area(
-                label="This critique is passed to the LLM to generate a new prediction.",
-                key="critique",
-                help=(
-                    "An LLM was prompted to critique the prediction on why it might not fit the pattern. "
-                    "This critique is passed in the PROMPT in the next prediction attempt. "
-                    "Feel free to make edits to the critique or use your own."
+        with st.expander("Past Attempts"):
+            st.dataframe(
+                controller.attempts_history_df,
+                hide_index=True,
+                selection_mode="single-row",
+                on_select=controller.handle_workflow_run_selection,
+                column_order=(
+                    "attempt #",
+                    "passing",
+                    "critique",
+                    "rationale",
                 ),
+                key="attempts_history_df",
+                use_container_width=True,
             )
 
-        # controls
         with st.container():
-            st.button(
-                "continue",
-                on_click=async_to_sync(controller.handle_prediction_click),
-                use_container_width=True,
-                disabled=st.session_state.get("disable_continue_button"),
-                key="continue_button",
-            )
+            continue_col, abort_col = st.columns([3, 1])
+            with continue_col:
+                st.button(
+                    "continue",
+                    on_click=async_to_sync(controller.handle_prediction_click),
+                    use_container_width=True,
+                    disabled=st.session_state.get("disable_continue_button"),
+                    key="continue_button",
+                    type="primary",
+                )
+
+            with abort_col:
+
+                @st.dialog("Are you sure you want to abort the session?")
+                def abort_solving() -> None:
+                    st.write(
+                        "Confirm that you want to abort the session by clicking 'confirm' button below."
+                    )
+                    if st.button("Confirm"):
+                        controller.reset()
+                        st.rerun()
+
+                st.button(
+                    "abort",
+                    on_click=abort_solving,
+                    use_container_width=True,
+                    disabled=st.session_state.get("disable_abort_button"),
+                )
