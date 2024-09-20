@@ -210,7 +210,9 @@ class Controller:
                 use_container_width=True,
                 key="prediction",
             )
-            st.write(rationale)
+            st.markdown(body=f"### Passing\n{passing}")
+            st.markdown(body=f"### Rationale\n{rationale}")
+            st.markdown(body=f"### Critique\n{critique}")
 
         selected_rows = (
             st.session_state.get("attempts_history_df")
@@ -233,3 +235,6 @@ class Controller:
                 critique=df_row["critique"],
                 passing=df_row["passing"],
             )
+
+    def handle_finetuning_preview_click(self) -> None:
+        ...
