@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 from llama_index.core.bridge.pydantic import BaseModel
 from llama_index.core.workflow import (
     Workflow,
@@ -45,7 +45,7 @@ class ARCTaskSolverWorkflow(Workflow):
 
     @step
     async def format_task(self, ctx: Context, ev: StartEvent) -> FormatTaskEvent:
-        from typing import Dict, List
+        ctx.write_event_to_stream(ev)
 
         def _format_row(row: List[int]) -> str:
             return ",".join(str(el) for el in row)
@@ -81,6 +81,7 @@ class ARCTaskSolverWorkflow(Workflow):
     async def prediction(
         self, ctx: Context, ev: FormatTaskEvent
     ) -> PredictionEvent | StopEvent:
+        ctx.write_event_to_stream(ev)
         prompt_vars = await ctx.get("prompt_vars")
 
         if "critique" in prompt_vars:
@@ -106,6 +107,7 @@ class ARCTaskSolverWorkflow(Workflow):
 
     @step
     async def evaluation(self, ctx: Context, ev: PredictionEvent) -> EvaluationEvent:
+        ctx.write_event_to_stream(ev)
         task = await ctx.get("task")
         attempts: List[Prediction] = await ctx.get("attempts")
         final_attempt = attempts[-1]
@@ -117,6 +119,7 @@ class ARCTaskSolverWorkflow(Workflow):
 
     @step
     async def reflection(self, ctx: Context, ev: EvaluationEvent) -> StopEvent:
+        ctx.write_event_to_stream(ev)
         attempts: List[Prediction] = await ctx.get("attempts")
 
         # check if passing

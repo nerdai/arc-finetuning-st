@@ -6,7 +6,6 @@ from typing import Tuple
 from llama_index.core.tools.function_tool import async_to_sync
 
 from arc_finetuning_st.streamlit.controller import Controller
-from arc_finetuning_st.streamlit.examples import sample_tasks
 
 st.set_page_config(layout="wide")
 

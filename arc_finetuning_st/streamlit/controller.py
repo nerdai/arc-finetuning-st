@@ -9,7 +9,6 @@ from os import listdir
 
 from llama_index.llms.openai import OpenAI
 
-from arc_finetuning_st.streamlit.examples import sample_tasks
 from arc_finetuning_st.workflows.models import Prediction
 from arc_finetuning_st.workflows.arc_task_solver import (
     ARCTaskSolverWorkflow,
@@ -68,24 +67,18 @@ class Controller:
         )
         return fig
 
-    @staticmethod
-    async def get_human_input() -> str:
-        asyncio.sleep(3)
-        return "got human input"
-
-    @staticmethod
-    async def human_input(prompt: str, **kwargs: Any) -> str:
-
-        critique = kwargs.get("critique", None)
-        prediction_str = kwargs.get("prediction_str", None)
-        grid = Prediction.prediction_str_to_int_array(prediction=prediction_str)
-        fig = Controller.plot_grid(grid, kind="prediction")
-        st.session_state.prediction = fig
-        st.session_state.passing = False
-
-        human_input = await asyncio.wait_for(Controller.get_human_input(), timeout=10)
-        st.info(f"got human input: {human_input}")
-        return human_input
+    async def show_progress_bar(self, handler) -> None:
+        progress_text_template = "{event} completed. Next step in progress."
+        my_bar = st.progress(0, text="Workflow run in progress. Please wait.")
+        num_steps = 5.0
+        current_step = 1
+        async for ev in handler.stream_events():
+            my_bar.progress(
+                current_step / num_steps,
+                text=progress_text_template.format(event=type(ev).__name__),
+            )
+            current_step += 1
+        my_bar.empty()
 
     def handle_abort_click(self) -> None:
         self.reset()
@@ -99,7 +92,11 @@ class Controller:
 
             if not self._handler:  # start a new solver
                 handler = w.run(task=task)
+
             else:  # continuing from past Workflow execution
+
+                # need to reset this queue otherwise will use nested event loops
+                self._handler.ctx._streaming_queue = asyncio.Queue()
 
                 # use the critique and prediction str from streamlit
                 critique = st.session_state.get("critique")
@@ -123,7 +120,11 @@ class Controller:
                 # run Workflow
                 handler = w.run(ctx=self._handler.ctx, task=task)
 
+            # progress bar
+            _ = asyncio.create_task(self.show_progress_bar(handler))
+
             res: WorkflowOutput = await handler
+
             self._handler = handler
             self._passing_results.append(res.passing)
             self._attempts = res.attempts
