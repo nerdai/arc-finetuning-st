@@ -16,6 +16,9 @@ from arc_finetuning_st.workflows.arc_task_solver import (
     WorkflowOutput,
 )
 from arc_finetuning_st.workflows.models import Attempt, Prediction
+from arc_finetuning_st.workflows.prompts import (
+    FINETUNING_DATASET_EXAMPLE_TEMPLATE,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -206,7 +209,7 @@ class Controller:
             fig: Any, rationale: str, critique: str, passing: bool
         ) -> None:
             st.plotly_chart(
-                prediction_fig,
+                fig,
                 use_container_width=True,
                 key="prediction",
             )
@@ -236,5 +239,26 @@ class Controller:
                 passing=df_row["passing"],
             )
 
-    def handle_finetuning_preview_click(self) -> None:
-        ...
+    async def handle_finetuning_preview_click(self) -> None:
+        if self._handler:
+            ft_vars = await self._handler.ctx.get("prompt_vars")
+
+            @st.dialog("Finetuning Example", width="large")
+            def _display_finetuning_example() -> None:
+                nonlocal ft_vars
+
+                formatted_past_attempts = [
+                    ARCTaskSolverWorkflow._format_past_attempt(a, ix + 1)
+                    for ix, a in enumerate(self._attempts[:-1])
+                ]
+                ft_vars.update(
+                    past_attempts="\n".join(formatted_past_attempts)
+                )
+                ft_vars.update(
+                    output=ARCTaskSolverWorkflow._format_past_attempt(
+                        self._attempts[-1], len(self._attempts)
+                    )
+                )
+                st.code(FINETUNING_DATASET_EXAMPLE_TEMPLATE.format(**ft_vars))
+
+            _display_finetuning_example()

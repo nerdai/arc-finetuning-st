@@ -90,7 +90,7 @@ with test_col:
     with preview_col:
         st.button(
             "fine-tuning example",
-            on_click=async_to_sync(controller.handle_prediction_click),
+            on_click=async_to_sync(controller.handle_finetuning_preview_click),
             use_container_width=True,
             disabled=st.session_state.get("disable_preview_button"),
             key="preview_button",
