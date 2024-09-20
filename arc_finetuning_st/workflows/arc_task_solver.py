@@ -32,6 +32,16 @@ OUTPUT:
 {output}
 """
 
+past_attempt_template = """◦◦◦
+PAST ATTEMPT {past_attempt_number}
+
+PREDICTED_OUTPUT:
+{past_predicted_output}
+
+CRITIQUE:
+{past_critique}
+"""
+
 
 class WorkflowOutput(BaseModel):
     passing: bool
@@ -43,6 +53,13 @@ class ARCTaskSolverWorkflow(Workflow):
         super().__init__(**kwargs)
         self.llm = llm
         self._max_attempts = max_attempts
+
+    def _format_past_attempt(self, attempt: Attempt, attempt_num: int) -> str:
+        return past_attempt_template.format(
+            past_attempt_number=attempt_num,
+            past_predicted_output=str(attempt.prediction),
+            past_critique=str(attempt.critique) if attempt.critique else "",
+        )
 
     @step
     async def format_task(
@@ -66,11 +83,19 @@ class ARCTaskSolverWorkflow(Workflow):
         task = ev.get("task", {})
         await ctx.set("task", task)
 
-        # check if ctx has data from previous run
-        # if there is, don't overwrite it
-        prompt_vars = await ctx.get("prompt_vars", {})
-
-        if not prompt_vars:
+        # prepare prompt_vars
+        attempts = await ctx.get("attempts", [])
+        if attempts:
+            # update past predictions
+            prompt_vars = await ctx.get("prompt_vars")
+            formatted_past_attempts = [
+                self._format_past_attempt(a, ix + 1)
+                for ix, a in enumerate(attempts)
+            ]
+            prompt_vars.update(
+                past_attempts="\n".join(formatted_past_attempts)
+            )
+        else:
             examples = [format_train_example(t) for t in task["train"]]
             prompt_vars = {
                 "test_input": pretty_print_grid(task["test"][0]["input"]),
@@ -85,16 +110,15 @@ class ARCTaskSolverWorkflow(Workflow):
         self, ctx: Context, ev: FormatTaskEvent
     ) -> PredictionEvent | StopEvent:
         ctx.write_event_to_stream(ev)
+        attempts = await ctx.get("attempts", [])
+        attempts = cast(List[Attempt], attempts)
         prompt_vars = await ctx.get("prompt_vars")
 
-        if "critique" in prompt_vars:
+        if attempts:
             # generating a correction from last Workflow run
-            attempts = await ctx.get("attempts")
-            attempts = cast(List[Attempt], attempts)
             correction: Prediction = await self.llm.astructured_predict(
                 Prediction, CORRECTION_PROMPT_TEMPLATE, **prompt_vars
             )
-
             attempts.append(Attempt(prediction=correction))
         else:
             # starting a new correction with no previous Workflow runs
@@ -133,7 +157,13 @@ class ARCTaskSolverWorkflow(Workflow):
         # check if passing
         if not ev.passing:
             prompt_vars = await ctx.get("prompt_vars")
-            prompt_vars.update(predicted_output=str(latest_attempt.prediction))
+            formatted_past_attempts = [
+                self._format_past_attempt(a, ix + 1)
+                for ix, a in enumerate(attempts)
+            ]
+            prompt_vars.update(
+                past_attempts="\n".join(formatted_past_attempts)
+            )
 
             # generate critique
             critique: Critique = await self.llm.astructured_predict(
@@ -142,8 +172,6 @@ class ARCTaskSolverWorkflow(Workflow):
 
             # update states
             latest_attempt.critique = critique
-            prompt_vars.update(critique=str(critique))
-            await ctx.set("prompt_vars", prompt_vars)
 
         latest_attempt.passing = ev.passing
         attempts[-1] = latest_attempt

@@ -104,22 +104,8 @@ class Controller:
 
                 # use the critique and prediction str from streamlit
                 critique = st.session_state.get("critique")
-                prompt_vars = await self._handler.ctx.get("prompt_vars")
-                prompt_vars.update(critique=critique)
-
-                # check if selected rows
-                selected_rows = (
-                    st.session_state.get("attempts_history_df")
-                    .get("selection")
-                    .get("rows")
-                )
-                if selected_rows:
-                    row_ix = selected_rows[0]
-                    df_row = self.attempts_history_df.iloc[row_ix]
-                    prediction_str = df_row["prediction"]
-                    prompt_vars.update(predicted_output=prediction_str)
-
-                await self._handler.ctx.set("prompt_vars", prompt_vars)
+                self._attempts[-1].critique = critique
+                await self._handler.ctx.set("attempts", self._attempts)
 
                 # run Workflow
                 handler = w.run(ctx=self._handler.ctx, task=task)
@@ -135,13 +121,12 @@ class Controller:
             self._attempts = res.attempts
 
             # update streamlit states
-            prompt_vars = await self._handler.ctx.get("prompt_vars")
             grid = Prediction.prediction_str_to_int_array(
                 prediction=str(res.attempts[-1].prediction)
             )
             prediction_fig = Controller.plot_grid(grid, kind="prediction")
             st.session_state.prediction = prediction_fig
-            st.session_state.critique = prompt_vars["critique"]
+            st.session_state.critique = str(res.attempts[-1].critique)
             st.session_state.disable_continue_button = False
             st.session_state.disable_abort_button = False
             st.session_state.disable_start_button = True

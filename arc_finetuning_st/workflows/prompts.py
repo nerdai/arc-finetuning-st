@@ -31,8 +31,8 @@ EXAMPLES:
 TEST INPUT:
 {test_input}
 
-LATEST PREDICTED OUTPUT:
-{predicted_output}
+PAST ATTEMPTS:
+{past_attempts}
 
 OUTPUT FORMAT:
 {{
@@ -48,7 +48,8 @@ common pattern. The TEST INPUT also shares this common pattern, and you've previ
 The predicted output was found to be incorrect and a critique has been articulated offering a potential
 reason as to why it may have been a flawed prediction.
 
-Your task now to create a new prediction that corrects the previous one using the critique.
+Your task now to create a new prediction that corrects from the previous attempts. Use
+the last attempt and critique.
 
 EXAMPLES:
 {examples}
@@ -56,11 +57,8 @@ EXAMPLES:
 TEST INPUT:
 {test_input}
 
-LATEST PREDICTED OUTPUT:
-{predicted_output}
-
-CRITIQUE:
-{critique}
+PAST ATTEMPTS:
+{past_attempts}
 
 OUTPUT FORMAT:
 {{
