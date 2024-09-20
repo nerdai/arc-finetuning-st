@@ -14,7 +14,7 @@ from arc_finetuning_st.workflows.arc_task_solver import (
     ARCTaskSolverWorkflow,
     WorkflowOutput,
 )
-from arc_finetuning_st.workflows.models import Prediction
+from arc_finetuning_st.workflows.models import Attempt, Prediction
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class Controller:
     def __init__(self) -> None:
         self._handler: Optional[WorkflowHandler] = None
-        self._attempts: List[Prediction] = []
+        self._attempts: List[Attempt] = []
         self._passing_results: List[bool] = []
         parent_path = Path(__file__).parents[2].absolute()
         self._data_path = Path(parent_path, "data", "training")
@@ -137,7 +137,7 @@ class Controller:
             # update streamlit states
             prompt_vars = await self._handler.ctx.get("prompt_vars")
             grid = Prediction.prediction_str_to_int_array(
-                prediction=res.attempts[-1].prediction
+                prediction=str(res.attempts[-1].prediction)
             )
             prediction_fig = Controller.plot_grid(grid, kind="prediction")
             st.session_state.prediction = prediction_fig
@@ -175,19 +175,20 @@ class Controller:
             attempt_number_list: List[int] = []
             passings: List[str] = []
             rationales: List[str] = []
+            critiques: List[str] = []
             predictions: List[str] = []
-            for ix, (a, passing) in enumerate(
-                zip(self._attempts, self._passing_results)
-            ):
-                passings = ["✅" if passing else "❌"] + passings
-                rationales = [a.rationale] + rationales
-                predictions = [a.prediction] + predictions
+            for ix, a in enumerate(self._attempts):
+                passings = ["✅" if a.passing else "❌"] + passings
+                rationales = [a.prediction.rationale] + rationales
+                predictions = [str(a.prediction)] + predictions
+                critiques = [str(a.critique)] + critiques
                 attempt_number_list = [ix + 1] + attempt_number_list
             return pd.DataFrame(
                 {
                     "attempt #": attempt_number_list,
                     "passing": passings,
                     "rationale": rationales,
+                    "critique": critiques,
                     # hidden from UI
                     "prediction": predictions,
                 }
@@ -209,6 +210,6 @@ class Controller:
             )
             prediction_fig = Controller.plot_grid(grid, kind="prediction")
             st.session_state.prediction = prediction_fig
-            st.session_state.critique = df_row["rationale"]
+            st.session_state.critique = df_row["critique"]
             metric_value = df_row["passing"]
             st.session_state.metric_value = metric_value

@@ -165,6 +165,7 @@ with test_col:
                     "attempt #",
                     "passing",
                     "rationale",
+                    "critique",
                 ),
                 key="attempts_history_df",
             )

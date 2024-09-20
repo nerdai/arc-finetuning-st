@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 from llama_index.core.bridge.pydantic import BaseModel
 from llama_index.core.llms import LLM
@@ -15,7 +15,7 @@ from arc_finetuning_st.workflows.events import (
     FormatTaskEvent,
     PredictionEvent,
 )
-from arc_finetuning_st.workflows.models import Correction, Critique, Prediction
+from arc_finetuning_st.workflows.models import Attempt, Critique, Prediction
 from arc_finetuning_st.workflows.prompts import (
     CORRECTION_PROMPT_TEMPLATE,
     PREDICTION_PROMPT_TEMPLATE,
@@ -35,7 +35,7 @@ OUTPUT:
 
 class WorkflowOutput(BaseModel):
     passing: bool
-    attempts: List[Prediction]
+    attempts: List[Attempt]
 
 
 class ARCTaskSolverWorkflow(Workflow):
@@ -90,21 +90,18 @@ class ARCTaskSolverWorkflow(Workflow):
         if "critique" in prompt_vars:
             # generating a correction from last Workflow run
             attempts = await ctx.get("attempts")
-            corr: Correction = await self.llm.astructured_predict(
-                Correction, CORRECTION_PROMPT_TEMPLATE, **prompt_vars
+            attempts = cast(List[Attempt], attempts)
+            correction: Prediction = await self.llm.astructured_predict(
+                Prediction, CORRECTION_PROMPT_TEMPLATE, **prompt_vars
             )
-            attempts.append(
-                Prediction(
-                    rationale=prompt_vars["critique"],
-                    prediction=corr.correction,
-                )
-            )
+
+            attempts.append(Attempt(prediction=correction))
         else:
             # starting a new correction with no previous Workflow runs
             pred: Prediction = await self.llm.astructured_predict(
                 Prediction, PREDICTION_PROMPT_TEMPLATE, **prompt_vars
             )
-            attempts = [pred]
+            attempts = [Attempt(prediction=pred)]
 
         await ctx.set("attempts", attempts)
         return PredictionEvent()
@@ -115,34 +112,42 @@ class ARCTaskSolverWorkflow(Workflow):
     ) -> EvaluationEvent:
         ctx.write_event_to_stream(ev)
         task = await ctx.get("task")
-        attempts: List[Prediction] = await ctx.get("attempts")
-        final_attempt = attempts[-1]
-        prediction_str = final_attempt.prediction
-        prediction = Prediction.prediction_str_to_int_array(prediction_str)
+        attempts: List[Attempt] = await ctx.get("attempts")
+        latest_prediction = attempts[-1].prediction
+        latest_prediction_as_array = Prediction.prediction_str_to_int_array(
+            str(latest_prediction)
+        )
         ground_truth = task["test"][0]["output"]
 
-        return EvaluationEvent(passing=(prediction == ground_truth))
+        return EvaluationEvent(
+            passing=(latest_prediction_as_array == ground_truth)
+        )
 
     @step
     async def reflection(self, ctx: Context, ev: EvaluationEvent) -> StopEvent:
         ctx.write_event_to_stream(ev)
-        attempts: List[Prediction] = await ctx.get("attempts")
+        attempts = await ctx.get("attempts")
+        attempts = cast(List[Attempt], attempts)
+        latest_attempt = attempts[-1]
 
         # check if passing
         if not ev.passing:
             prompt_vars = await ctx.get("prompt_vars")
-            prompt_vars.update(
-                predicted_output=attempts[-1].prediction
-            )  # use last attempt
+            prompt_vars.update(predicted_output=str(latest_attempt.prediction))
 
             # generate critique
-            critique_model: Critique = await self.llm.astructured_predict(
+            critique: Critique = await self.llm.astructured_predict(
                 Critique, REFLECTION_PROMPT_TEMPLATE, **prompt_vars
             )
 
-            # generate correction
-            prompt_vars.update(critique=critique_model.critique)
+            # update states
+            latest_attempt.critique = critique
+            prompt_vars.update(critique=str(critique))
             await ctx.set("prompt_vars", prompt_vars)
+
+        latest_attempt.passing = ev.passing
+        attempts[-1] = latest_attempt
+        await ctx.set("attempts", attempts)
 
         result = WorkflowOutput(passing=ev.passing, attempts=attempts)
         return StopEvent(result=result)
