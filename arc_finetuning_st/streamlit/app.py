@@ -5,6 +5,7 @@ from llama_index.core.tools.function_tool import async_to_sync
 
 from arc_finetuning_st.streamlit.controller import Controller
 
+# startup
 st.set_page_config(layout="wide")
 
 
@@ -16,7 +17,7 @@ def startup() -> Tuple[Controller,]:
 
 (controller,) = startup()
 
-
+# states
 if "show_finetuning_preview_dialog" not in st.session_state:
     st.session_state["show_finetuning_preview_dialog"] = True
 if "disable_continue_button" not in st.session_state:
@@ -30,10 +31,14 @@ if "disable_preview_button" not in st.session_state:
 if "metric_value" not in st.session_state:
     st.session_state["metric_value"] = "N/A"
 
-logo = '[<img src="https://d3ddy8balm3goa.cloudfront.net/llamaindex/LlamaLogoSquare.png" width="28" height="28" />](https://github.com/run-llama/llama-agents "Check out the llama-agents Github repo!")'
-st.title("ARC Task Solver Workflow with Human Input")
+logo = '[<img src="https://d3ddy8balm3goa.cloudfront.net/llamaindex/LlamaLogoSmall.png" width="28" height="28" />](https://github.com/run-llama/llama-agents "Check out the llama-agents Github repo!")'
+st.title("ARC Task Solver with Human Input")
+st.markdown(
+    f"{logo} &nbsp; _Powered with LlamaIndex Worfklows_",
+    unsafe_allow_html=True,
+)
 
-
+# sidebar
 with st.sidebar:
     task_selection = st.radio(
         label="Tasks",
