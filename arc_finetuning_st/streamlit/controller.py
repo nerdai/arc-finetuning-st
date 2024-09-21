@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import uuid
 from os import listdir
 from pathlib import Path
 from typing import Any, List, Literal, Optional, cast
@@ -27,9 +26,9 @@ class Controller:
         self._handler: Optional[WorkflowHandler] = None
         self._attempts: List[Attempt] = []
         self._passing_results: List[bool] = []
-        parent_path = Path(__file__).parents[2].absolute()
-        self._data_path = Path(parent_path, "data", "training")
-        self._attempts_history_df_key = str(uuid.uuid4())
+        self._data_path = Path(
+            Path(__file__).parents[2].absolute(), "data", "training"
+        )
 
     def reset(self) -> None:
         # clear prediction
@@ -160,10 +159,6 @@ class Controller:
         return None
 
     @property
-    def attempts_history_df_key(self) -> str:
-        return self._attempts_history_df_key
-
-    @property
     def attempts_history_df(
         self,
     ) -> pd.DataFrame:
@@ -246,6 +241,7 @@ class Controller:
                 nonlocal prompt_vars
 
                 finetuning_example = FineTuningExample.from_attempts(
+                    task_name=st.session_state.selected_task,
                     attempts=self._attempts,
                     examples=prompt_vars["examples"],
                     test_input=prompt_vars["test_input"],
@@ -256,9 +252,6 @@ class Controller:
                     with save_col:
                         if st.button("Save", use_container_width=True):
                             finetuning_example.write_json()
-                            st.success(
-                                "Successfully saved finetuning example."
-                            )
                             st.session_state.show_finetuning_preview_dialog = (
                                 False
                             )

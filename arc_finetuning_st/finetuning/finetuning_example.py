@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Annotated, Any, Callable, List, Optional
 
 from llama_index.core.base.llms.types import ChatMessage, MessageRole
-from llama_index.core.bridge.pydantic import BaseModel, WrapSerializer
+from llama_index.core.bridge.pydantic import BaseModel, Field, WrapSerializer
 
 from arc_finetuning_st.finetuning.templates import (
     ASSISTANT_TEMPLATE,
@@ -26,10 +26,12 @@ class FineTuningExample(BaseModel):
     messages: List[
         Annotated[ChatMessage, WrapSerializer(remove_additional_kwargs)]
     ]
+    task_name: str = Field(exclude=True)
 
     @classmethod
     def from_attempts(
         cls,
+        task_name: str,
         examples: str,
         test_input: str,
         attempts: List[Attempt],
@@ -65,7 +67,7 @@ class FineTuningExample(BaseModel):
                     ),
                 ]
             )
-        return cls(messages=messages)
+        return cls(messages=messages, task_name=task_name)
 
     def to_json(self) -> str:
         data = self.model_dump()
@@ -79,5 +81,5 @@ class FineTuningExample(BaseModel):
         data = self.model_dump()
         dir = Path(dirpath or Path(__file__).parents[2].absolute(), dirname)
         dir.mkdir(exist_ok=True, parents=True)
-        with open(Path(dir, "test.json"), "w") as f:
+        with open(Path(dir, self.task_name), "w") as f:
             json.dump(data, f)
