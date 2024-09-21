@@ -11,14 +11,12 @@ import streamlit as st
 from llama_index.core.workflow.handler import WorkflowHandler
 from llama_index.llms.openai import OpenAI
 
+from arc_finetuning_st.finetuning.finetuning_example import FineTuningExample
 from arc_finetuning_st.workflows.arc_task_solver import (
     ARCTaskSolverWorkflow,
     WorkflowOutput,
 )
 from arc_finetuning_st.workflows.models import Attempt, Prediction
-from arc_finetuning_st.workflows.prompts import (
-    FINETUNING_DATASET_EXAMPLE_TEMPLATE,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -242,24 +240,18 @@ class Controller:
     async def handle_finetuning_preview_click(self) -> None:
         if self._handler:
             st.session_state.show_finetuning_preview_dialog = True
-            ft_vars = await self._handler.ctx.get("prompt_vars")
+            prompt_vars = await self._handler.ctx.get("prompt_vars")
 
             @st.dialog("Finetuning Example", width="large")
             def _display_finetuning_example() -> None:
-                nonlocal ft_vars
+                nonlocal prompt_vars
 
-                formatted_past_attempts = [
-                    ARCTaskSolverWorkflow._format_past_attempt(a, ix + 1)
-                    for ix, a in enumerate(self._attempts[:-1])
-                ]
-                ft_vars.update(
-                    past_attempts="\n".join(formatted_past_attempts)
+                finetuning_example = FineTuningExample.from_attempts(
+                    attempts=self._attempts,
+                    examples=prompt_vars["examples"],
+                    test_input=prompt_vars["test_input"],
                 )
-                ft_vars.update(
-                    output=ARCTaskSolverWorkflow._format_past_attempt(
-                        self._attempts[-1], len(self._attempts)
-                    )
-                )
+
                 with st.container(height=500, border=False):
                     save_col, close_col = st.columns([1, 1])
                     with save_col:
@@ -276,8 +268,8 @@ class Controller:
                             st.rerun()
 
                     st.code(
-                        FINETUNING_DATASET_EXAMPLE_TEMPLATE.format(**ft_vars),
-                        language="markdown",
+                        finetuning_example.to_json(),
+                        language="json",
                         wrap_lines=True,
                     )
 
