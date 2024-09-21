@@ -241,6 +241,7 @@ class Controller:
 
     async def handle_finetuning_preview_click(self) -> None:
         if self._handler:
+            st.session_state.show_finetuning_preview_dialog = True
             ft_vars = await self._handler.ctx.get("prompt_vars")
 
             @st.dialog("Finetuning Example", width="large")
@@ -259,6 +260,26 @@ class Controller:
                         self._attempts[-1], len(self._attempts)
                     )
                 )
-                st.code(FINETUNING_DATASET_EXAMPLE_TEMPLATE.format(**ft_vars))
+                with st.container(height=500, border=False):
+                    save_col, close_col = st.columns([1, 1])
+                    with save_col:
+                        if st.button("Save", use_container_width=True):
+                            st.session_state.show_finetuning_preview_dialog = (
+                                False
+                            )
+                            st.rerun()
+                    with close_col:
+                        if st.button("Close", use_container_width=True):
+                            st.session_state.show_finetuning_preview_dialog = (
+                                False
+                            )
+                            st.rerun()
 
-            _display_finetuning_example()
+                    st.code(
+                        FINETUNING_DATASET_EXAMPLE_TEMPLATE.format(**ft_vars),
+                        language="markdown",
+                        wrap_lines=True,
+                    )
+
+            if st.session_state.show_finetuning_preview_dialog:
+                _display_finetuning_example()

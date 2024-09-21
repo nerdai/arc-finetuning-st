@@ -73,8 +73,7 @@ common pattern. The TEST INPUT also shares this common pattern, and you've previ
 The predicted output was found to be incorrect and a critique has been articulated offering a potential
 reason as to why it may have been a flawed prediction.
 
-Your task now to create a new prediction that corrects from the previous attempts. Use
-the last attempt and critique.
+Your task now to create a new prediction that corrects from the previous attempts. Use the last attempt and critique.
 
 EXAMPLES:
 {examples}

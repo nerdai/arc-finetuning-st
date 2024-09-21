@@ -17,6 +17,8 @@ def startup() -> Tuple[Controller,]:
 (controller,) = startup()
 
 
+if "show_finetuning_preview_dialog" not in st.session_state:
+    st.session_state["show_finetuning_preview_dialog"] = True
 if "disable_continue_button" not in st.session_state:
     st.session_state["disable_continue_button"] = True
 if "disable_start_button" not in st.session_state:
