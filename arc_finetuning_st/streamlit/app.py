@@ -46,6 +46,7 @@ with st.sidebar:
         index=0,
         on_change=controller.selectbox_selection_change_handler,
         key="selected_task",
+        format_func=controller.radio_format_task_name,
     )
 
 train_col, test_col = st.columns(

@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Annotated, Any, Callable, List, Optional
+from typing import Annotated, Any, Callable, List
 
 from llama_index.core.base.llms.types import ChatMessage, MessageRole
 from llama_index.core.bridge.pydantic import BaseModel, Field, WrapSerializer
@@ -12,8 +12,6 @@ from arc_finetuning_st.finetuning.templates import (
     USER_TASK_TEMPLATE,
 )
 from arc_finetuning_st.workflows.models import Attempt
-
-DEFAULT_OUTPUT_DIRNAME = "finetuning_examples"
 
 
 def remove_additional_kwargs(value: Any, handler: Callable, info: Any) -> Any:
@@ -73,13 +71,7 @@ class FineTuningExample(BaseModel):
         data = self.model_dump()
         return json.dumps(data, indent=4)
 
-    def write_json(
-        self,
-        dirpath: Optional[Path] = None,
-        dirname: str = DEFAULT_OUTPUT_DIRNAME,
-    ) -> None:
+    def write_json(self, dirpath: Path) -> None:
         data = self.model_dump()
-        dir = Path(dirpath or Path(__file__).parents[2].absolute(), dirname)
-        dir.mkdir(exist_ok=True, parents=True)
-        with open(Path(dir, self.task_name), "w") as f:
+        with open(Path(dirpath, self.task_name), "w") as f:
             json.dump(data, f)

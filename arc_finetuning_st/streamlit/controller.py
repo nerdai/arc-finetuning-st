@@ -29,6 +29,10 @@ class Controller:
         self._data_path = Path(
             Path(__file__).parents[2].absolute(), "data", "training"
         )
+        self._finetuning_examples_path = Path(
+            Path(__file__).parents[2].absolute(), "finetuning_examples"
+        )
+        self._finetuning_examples_path.mkdir(exist_ok=True, parents=True)
 
     def reset(self) -> None:
         # clear prediction
@@ -142,8 +146,17 @@ class Controller:
             st.session_state.metric_value = metric_value
 
     @property
+    def saved_finetuning_examples(self) -> List[str]:
+        return listdir(self._finetuning_examples_path)
+
+    @property
     def task_file_names(self) -> List[str]:
         return listdir(self._data_path)
+
+    def radio_format_task_name(self, selected_task: str) -> str:
+        if selected_task in self.saved_finetuning_examples:
+            return f"{selected_task} ✅"
+        return selected_task
 
     def load_task(self, selected_task: str) -> Any:
         task_path = Path(self._data_path, selected_task)
@@ -251,7 +264,9 @@ class Controller:
                     save_col, close_col = st.columns([1, 1])
                     with save_col:
                         if st.button("Save", use_container_width=True):
-                            finetuning_example.write_json()
+                            finetuning_example.write_json(
+                                self._finetuning_examples_path,
+                            )
                             st.session_state.show_finetuning_preview_dialog = (
                                 False
                             )
