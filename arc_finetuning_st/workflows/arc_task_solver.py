@@ -54,8 +54,7 @@ class ARCTaskSolverWorkflow(Workflow):
         self.llm = llm
         self._max_attempts = max_attempts
 
-    @staticmethod
-    def _format_past_attempt(attempt: Attempt, attempt_num: int) -> str:
+    def _format_past_attempt(self, attempt: Attempt, attempt_num: int) -> str:
         return past_attempt_template.format(
             past_attempt_number=attempt_num,
             past_predicted_output=str(attempt.prediction),
@@ -90,7 +89,7 @@ class ARCTaskSolverWorkflow(Workflow):
             # update past predictions
             prompt_vars = await ctx.get("prompt_vars")
             formatted_past_attempts = [
-                ARCTaskSolverWorkflow._format_past_attempt(a, ix + 1)
+                self._format_past_attempt(a, ix + 1)
                 for ix, a in enumerate(attempts)
             ]
             prompt_vars.update(
@@ -159,7 +158,7 @@ class ARCTaskSolverWorkflow(Workflow):
         if not ev.passing:
             prompt_vars = await ctx.get("prompt_vars")
             formatted_past_attempts = [
-                ARCTaskSolverWorkflow._format_past_attempt(a, ix + 1)
+                self._format_past_attempt(a, ix + 1)
                 for ix, a in enumerate(attempts)
             ]
             prompt_vars.update(

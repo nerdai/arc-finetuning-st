@@ -67,25 +67,3 @@ OUTPUT FORMAT:
 
 Return your response in JSON format given above. DO NOT RETURN markdown code."""
 )
-
-FINETUNING_DATASET_EXAMPLE_TEMPLATE = """You are a bot that is very good at solving puzzles. Below is a list of input and output pairs that share a
-common pattern. The TEST INPUT also shares this common pattern, and you've previously predicted the output for it.
-The predicted output was found to be incorrect and a critique has been articulated offering a potential
-reason as to why it may have been a flawed prediction.
-
-Your task now to create a new prediction that corrects from the previous attempts. Use the last attempt and critique.
-
-EXAMPLES:
-{examples}
-
-TEST INPUT:
-{test_input}
-
-PAST ATTEMPTS:
-{past_attempts}
-
-Return your response in JSON format given above. DO NOT RETURN markdown code.
-
-OUTPUT:
-{output}
-"""
