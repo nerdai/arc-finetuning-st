@@ -1,4 +1,4 @@
-# ARC Task LLM Solver With Human Input
+# ARC Task (LLM) Solver With Human Input
 
 The Abstraction and Reasoning Corpus (ARC) for Artificial General Intelligence
 benchmark aims to measure an AI system's ability to efficiently learn new skills.
@@ -10,6 +10,10 @@ Motivated by this large disparity, we built this app with the goal of injecting
 human-level reasoning on this benchmark to LLMs. Specifically, this app enables
 the collaboration of LLMs and humans to solve an ARC task; and these collaborations
 can then be used for fine-tuning the LLM.
+
+The Solver itself is a LlamaIndex `Workflow` that relies on successive runs for
+which `Context` is maintained from previous runs. Doing so allows for an
+effective implementation of the Human In the Loop Pattern.
 
 [example ARC task]
 
@@ -41,8 +45,35 @@ export OPENAI_API_KEY=<FILL-IN> && streamlit run arc_finetuning_st/streamlit/app
 
 ## How To Use The App
 
+In the next two sections, we discuss how to use the app in order to solve a given
+ARC task.
+
 ### Solving An ARC Task
+
+Each ARC task consists of training examples, each of which consist of input and
+output pairs. There exists a common pattern between these input and output pairs,
+and the problem is solved by uncovering this pattern, which can be verified by
+the included test examples.
+
+To solve the task, we cycle through the following three steps:
+
+1. Prediction (of test output grid)
+2. Evaluation
+3. Critique (human in the loop)
+
+Step 1. makes use of an LLM to produce the Prediction whereas Step 2. is
+deterministic and is a mere comparison between the ground truth test output and
+the Prediction. If the Prediction doesn't match the ground truth grid, then Step 3.
+is performed. Similar to step 1. an LLM is prompted to generate a Critique on the
+Prediction as to why it may not match the pattern underlying the train input and
+output pairs. However, we also allow for a human in the loop to override this
+LLM generated Critique.
+
+The Critique is carried on from a previous cycle onto the next in order to
+generate an improved and hopefully correct next Prediction.
 
 ### Saving Solutions For Fine-Tuning
 
-## A Note On The Underlying LlamaIndex Workflow
+Any collaboration session involving the LLM and human can be saved and used to
+finetune an LLM. In this app, we use OpenAI LLMs, and so the finetuning examples
+adhere to the [OpenAI fine-tuning API](https://platform.openai.com/docs/guides/fine-tuning/preparing-your-dataset).
