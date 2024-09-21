@@ -1,7 +1,7 @@
 # ARC Task (LLM) Solver With Human Input
 
 <p align="center">
-  <img height="300" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/ArcTask.svg" alt="cover">
+  <img height="300" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/arc-task.svg" alt="cover">
 </p>
 
 The Abstraction and Reasoning Corpus (ARC) for Artificial General Intelligence
