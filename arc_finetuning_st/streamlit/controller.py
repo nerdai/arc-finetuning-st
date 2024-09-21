@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import uuid
 from os import listdir
@@ -146,8 +147,6 @@ class Controller:
         return listdir(self._data_path)
 
     def load_task(self, selected_task: str) -> Any:
-        import json
-
         task_path = Path(self._data_path, selected_task)
 
         with open(task_path) as f:
@@ -256,6 +255,10 @@ class Controller:
                     save_col, close_col = st.columns([1, 1])
                     with save_col:
                         if st.button("Save", use_container_width=True):
+                            finetuning_example.write_json()
+                            st.success(
+                                "Successfully saved finetuning example."
+                            )
                             st.session_state.show_finetuning_preview_dialog = (
                                 False
                             )

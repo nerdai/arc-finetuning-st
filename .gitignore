@@ -12,3 +12,4 @@ __pycache__
 data
 notebooks
 .DS_Store
+finetuning_examples
