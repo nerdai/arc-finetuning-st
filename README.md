@@ -91,6 +91,8 @@ prediction, hit the `Continue` button.
 Any collaboration session involving the LLM and human can be saved and used to
 finetune an LLM. In this app, we use OpenAI LLMs, and so the finetuning examples
 adhere to the [OpenAI fine-tuning API](https://platform.openai.com/docs/guides/fine-tuning/preparing-your-dataset).
+Click the `fine-tuning example` button during a session to see the current
+example that can be used for fine-tuning.
 
 <p align="center">
   <img height="500" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/finetuning-arc-example.svg" alt="cover">
