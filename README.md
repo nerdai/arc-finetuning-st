@@ -51,7 +51,7 @@ In the next two sections, we discuss how to use the app in order to solve a give
 ARC task.
 
 <p align="center">
-  <img height="300" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/arc-task-solver-demo.svg" alt="cover">
+  <img height="300" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/arc-task-solver-app.svg" alt="cover">
 </p>
 
 ### Solving An ARC Task
