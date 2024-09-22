@@ -1,4 +1,7 @@
-from typing import Any, Dict, List, cast
+import asyncio
+import json
+from pathlib import Path
+from typing import Any, Dict, List, Optional, cast
 
 from llama_index.core.bridge.pydantic import BaseModel
 from llama_index.core.llms import LLM
@@ -181,6 +184,30 @@ class ARCTaskSolverWorkflow(Workflow):
 
         result = WorkflowOutput(passing=ev.passing, attempts=attempts)
         return StopEvent(result=result)
+
+    async def load_and_run_task(
+        self,
+        task_path: Path,
+        ctx: Optional[Context] = None,
+        sem: Optional[asyncio.Semaphore] = None,
+    ) -> Any:
+        """Convenience function for loading a task json and running it."""
+        with open(task_path) as f:
+            task = json.load(f)
+
+        async def _run_workflow() -> Any:
+            return await self.run(ctx=ctx, task=task)
+
+        if sem:  # in case running in batch with other workflow runs
+            await sem.acquire()
+            try:
+                res = await _run_workflow()
+            finally:
+                sem.release()
+        else:
+            res = await _run_workflow()
+
+        return res
 
 
 async def _test_workflow() -> None:
