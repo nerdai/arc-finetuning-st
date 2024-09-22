@@ -1,12 +1,15 @@
 import asyncio
 from os import listdir
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, cast
 
 from llama_index.core.async_utils import chunks
 from llama_index.llms.openai import OpenAI
 
-from arc_finetuning_st.workflows.arc_task_solver import ARCTaskSolverWorkflow
+from arc_finetuning_st.workflows.arc_task_solver import (
+    ARCTaskSolverWorkflow,
+    WorkflowOutput,
+)
 
 DATA_PATH = Path(Path(__file__).parents[1].absolute(), "data", "evaluation")
 
@@ -41,6 +44,7 @@ async def main() -> None:
         timeout=None, verbose=False, llm=OpenAI("gpt-4o")
     )
     results = await batch_runner(w, task_paths[:10], verbose=True)
+    results = cast(List[WorkflowOutput], results)
     num_solved = sum(el.passing for el in results)
     print(
         f"Solved: {num_solved}\nTotal Tasks:{len(results)}\nAverage Solve Rate: {float(num_solved) / len(results)}"
