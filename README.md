@@ -67,6 +67,8 @@ To solve the task, we cycle through the following three steps:
 2. Evaluation
 3. Critique (human in the loop)
 
+(Under the hood a LlamaIndex `Workflow` implements these three `steps`.)
+
 Step 1. makes use of an LLM to produce the Prediction whereas Step 2. is
 deterministic and is a mere comparison between the ground truth test output and
 the Prediction. If the Prediction doesn't match the ground truth grid, then Step 3.
