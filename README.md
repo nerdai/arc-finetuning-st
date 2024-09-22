@@ -20,7 +20,7 @@ which `Context` is maintained from previous runs. Doing so allows for an
 effective implementation of the Human In the Loop Pattern.
 
 <p align="center">
-  <img height="500" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/human-in-loop-2.svg" alt="cover">
+  <img height="500" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/human-in-loop-2.excalidraw.svg" alt="cover">
 </p>
 
 
