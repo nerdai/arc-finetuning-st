@@ -19,6 +19,11 @@ The Solver itself is a LlamaIndex `Workflow` that relies on successive runs for
 which `Context` is maintained from previous runs. Doing so allows for an
 effective implementation of the Human In the Loop Pattern.
 
+<p align="center">
+  <img height="500" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/human-in-loop-2.svg" alt="cover">
+</p>
+
+
 ## Running The App
 
 Before running the streamlit app, we first must download the ARC dataset. The
