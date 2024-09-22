@@ -1,6 +1,6 @@
 # ARC Task (LLM) Solver With Human Input
 
-The Abstraction and Reasoning Corpus (ARC) for Artificial General Intelligence
+The Abstraction and Reasoning Corpus ([ARC](https://github.com/fchollet/ARC-AGI)) for Artificial General Intelligence
 benchmark aims to measure an AI system's ability to efficiently learn new skills.
 Each task within the ARC benchmark contains a unique puzzle for which the systems
 attempt to solve. Currently, the best AI systems achieve 34% solve rates, whereas
