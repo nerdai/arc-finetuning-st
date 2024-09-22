@@ -22,7 +22,7 @@ from arc_finetuning_st.workflows.prompts import (
     REFLECTION_PROMPT_TEMPLATE,
 )
 
-example_template = """===
+EXAMPLE_TEMPLATE = """===
 EXAMPLE
 
 INPUT:
@@ -32,7 +32,7 @@ OUTPUT:
 {output}
 """
 
-past_attempt_template = """◦◦◦
+PAST_ATTEMPT_TEMPLATE = """◦◦◦
 PAST ATTEMPT {past_attempt_number}
 
 PREDICTED_OUTPUT:
@@ -55,7 +55,7 @@ class ARCTaskSolverWorkflow(Workflow):
         self._max_attempts = max_attempts
 
     def _format_past_attempt(self, attempt: Attempt, attempt_num: int) -> str:
-        return past_attempt_template.format(
+        return PAST_ATTEMPT_TEMPLATE.format(
             past_attempt_number=attempt_num,
             past_predicted_output=str(attempt.prediction),
             past_critique=str(attempt.critique) if attempt.critique else "",
@@ -75,7 +75,7 @@ class ARCTaskSolverWorkflow(Workflow):
             return "\n".join(formatted_rows)
 
         def format_train_example(train_pair: Dict) -> str:
-            return example_template.format(
+            return EXAMPLE_TEMPLATE.format(
                 input=pretty_print_grid(train_pair["input"]),
                 output=pretty_print_grid(train_pair["output"]),
             )
