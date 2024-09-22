@@ -1,14 +1,14 @@
 # ARC Task (LLM) Solver With Human Input
 
-<p align="center">
-  <img height="300" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/arc-task.svg" alt="cover">
-</p>
-
 The Abstraction and Reasoning Corpus (ARC) for Artificial General Intelligence
 benchmark aims to measure an AI system's ability to efficiently learn new skills.
 Each task within the ARC benchmark contains a unique puzzle for which the systems
 attempt to solve. Currently, the best AI systems achieve 34% solve rates, whereas
 humans are able to achieve 85% ([source](https://www.kaggle.com/competitions/arc-prize-2024/overview/prizes)).
+
+<p align="center">
+  <img height="300" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/arc-task.svg" alt="cover">
+</p>
 
 Motivated by this large disparity, we built this app with the goal of injecting
 human-level reasoning on this benchmark to LLMs. Specifically, this app enables
@@ -18,8 +18,6 @@ can then be used for fine-tuning the LLM.
 The Solver itself is a LlamaIndex `Workflow` that relies on successive runs for
 which `Context` is maintained from previous runs. Doing so allows for an
 effective implementation of the Human In the Loop Pattern.
-
-[example ARC task]
 
 ## Running The App
 
@@ -52,6 +50,10 @@ export OPENAI_API_KEY=<FILL-IN> && streamlit run arc_finetuning_st/streamlit/app
 In the next two sections, we discuss how to use the app in order to solve a given
 ARC task.
 
+<p align="center">
+  <img height="300" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/arc-task-solver-demo.svg" alt="cover">
+</p>
+
 ### Solving An ARC Task
 
 Each ARC task consists of training examples, each of which consist of input and
@@ -75,6 +77,12 @@ LLM generated Critique.
 
 The Critique is carried on from a previous cycle onto the next in order to
 generate an improved and hopefully correct next Prediction.
+
+To begin, click the `Start` button found in the top-right corner. If the
+prediction is incorrect, you can view the Critique produced by the LLM in the
+designated text area. You can choose to use this Critique or supply your own by
+overwriting the text and applying the change. Once ready to produce the next
+prediction, hit the `Continue` button.
 
 ### Saving Solutions For Fine-Tuning
 
