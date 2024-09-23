@@ -65,6 +65,20 @@ class FineTuningExample(BaseModel):
                     ),
                 ]
             )
+
+        # always end with an asst message or else openai finetuning job will failt
+        if a.critique == "This predicted output is correct.":
+            final_asst_message = ChatMessage(
+                role=MessageRole.ASSISTANT,
+                content="Glad, we were able to solve the puzzle!",
+            )
+        else:
+            final_asst_message = ChatMessage(
+                role=MessageRole.ASSISTANT,
+                content="Thanks for the feedback. I'll incorporate this into my next prediction.",
+            )
+
+        messages.append(final_asst_message)
         return cls(messages=messages, task_name=task_name)
 
     def to_json(self) -> str:
