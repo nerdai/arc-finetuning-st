@@ -17,6 +17,7 @@ llama-index-program-openai = "^0.2.0"
 streamlit = "^1.38.0"
 plotly = "^5.24.1"
 pandas = "^2.2.2"
+llama-index-finetuning = "^0.2.1"
 
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "^4.2.5"
