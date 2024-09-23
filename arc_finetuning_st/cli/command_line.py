@@ -89,19 +89,24 @@ def handle_finetune_job_submit(
 
 
 def handle_check_finetune_job(
-    start_job_id: Optional[str], llm: Optional[str], use_latest: bool
+    start_job_id: Optional[str],
+    llm: Optional[str],
+    latest: bool,
+    **kwargs: Any,
 ) -> None:
-    if use_latest:
+    if latest:
         try:
             with open(FINETUNING_ASSETS_PATH / FINETUNE_JOBS_FILENAME) as f:
-                job_metadata = json.load(f)
-                start_job_id = job_metadata["start_job_id"]
-                llm = job_metadata["model"]
+                lines = f.read().splitlines()
+                metadata_str = lines[-1]
+                metadata = json.loads(metadata_str)
+                start_job_id = metadata["start_job_id"]
+                llm = metadata["model"]
         except FileNotFoundError:
             raise ValueError(
                 "No finetuning_jobs.json file exists. You likely haven't submitted a job yet."
             )
-    if not use_latest and (start_job_id is None or llm is None):
+    if not latest and (start_job_id is None or llm is None):
         raise ValueError(
             "If not `use_latest` then must provide `start_job_id` and `llm`."
         )
@@ -168,6 +173,33 @@ def main() -> None:
     )
     finetune_parser.set_defaults(
         func=lambda args: handle_finetune_job_submit(**vars(args))
+    )
+
+    # job status command
+    job_status_parser = subparsers.add_parser(
+        "job-status", help="Check the status of finetuning job."
+    )
+    job_status_parser.add_argument(
+        "-j",
+        "--start-job-id",
+        type=str,
+        default=None,
+        help="Previously started job id, to continue finetuning.",
+    )
+    job_status_parser.add_argument(
+        "-m",
+        "--llm",
+        type=str,
+        default="gpt-4o-2024-08-06",
+        help="The OpenAI LLM model to finetune.",
+    )
+    job_status_parser.add_argument(
+        "--latest",
+        action=argparse.BooleanOptionalAction,
+        help="If set, checks the status of the last submitted job.",
+    )
+    job_status_parser.set_defaults(
+        func=lambda args: handle_check_finetune_job(**vars(args))
     )
 
     # Parse the command-line arguments
