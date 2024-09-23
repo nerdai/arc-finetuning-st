@@ -2,14 +2,25 @@ import argparse
 import asyncio
 from os import listdir
 from pathlib import Path
-from typing import Any, List, cast
+from typing import Any, List, Optional, cast
 
 from llama_index.llms.openai import OpenAI
 
 from arc_finetuning_st.cli.evaluation import batch_runner
+from arc_finetuning_st.cli.finetune import (
+    prepare_finetuning_jsonl_file,
+    submit_finetune_job,
+)
 from arc_finetuning_st.workflows.arc_task_solver import (
     ARCTaskSolverWorkflow,
     WorkflowOutput,
+)
+
+SINGLE_EXAMPLE_JSON_PATH = Path(
+    Path(__file__).parents[2].absolute(), "finetuning_examples"
+)
+FINETUNING_ASSETS_PATH = Path(
+    Path(__file__).parents[2].absolute(), "finetuning_assets"
 )
 
 
@@ -44,6 +55,20 @@ def handle_evaluate(
     )
 
 
+def handle_finetune_job_submit(
+    llm: str, start_job_id: Optional[str], **kwargs: Any
+) -> None:
+    prepare_finetuning_jsonl_file(
+        json_path=SINGLE_EXAMPLE_JSON_PATH, assets_path=FINETUNING_ASSETS_PATH
+    )
+    submit_finetune_job(
+        llm=llm,
+        start_job_id=start_job_id,
+        json_path=SINGLE_EXAMPLE_JSON_PATH,
+        assets_path=FINETUNING_ASSETS_PATH,
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="arc-finetuning cli tool.")
 
@@ -52,7 +77,7 @@ def main() -> None:
         title="commands", dest="command", required=True
     )
 
-    # evaluation command
+    # evaluate command
     evaluate_parser = subparsers.add_parser(
         "evaluate",
         help="Evaluation of ARC Task predictions with LLM and ARCTaskSolverWorkflow.",
@@ -72,6 +97,28 @@ def main() -> None:
     evaluate_parser.add_argument("-s", "--sleep", type=int, default=10)
     evaluate_parser.set_defaults(
         func=lambda args: handle_evaluate(**vars(args))
+    )
+
+    # finetune command
+    finetune_parser = subparsers.add_parser(
+        "finetune", help="Finetune OpenAI LLM on ARC Task Solver examples."
+    )
+    finetune_parser.add_argument(
+        "-m",
+        "--llm",
+        type=str,
+        default="gpt-4o-2024-08-06",
+        help="The OpenAI LLM model to finetune.",
+    )
+    finetune_parser.add_argument(
+        "-j",
+        "--start-job-id",
+        type=str,
+        default=None,
+        help="Previously started job id, to continue finetuning.",
+    )
+    finetune_parser.set_defaults(
+        func=lambda args: handle_finetune_job_submit(**vars(args))
     )
 
     # Parse the command-line arguments

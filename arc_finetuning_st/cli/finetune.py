@@ -1,13 +1,6 @@
-# prepare jsonl from finetuning_examples/
-
-# get finetuning model name if exists
-
-# submit finetune job
-
-# check on current job id
-
 from os import listdir
 from pathlib import Path
+from typing import Optional
 
 from llama_index.finetuning import OpenAIFinetuneEngine
 
@@ -25,38 +18,44 @@ FINETUNE_JOBS_FILENAME = "finetuning_jobs.txt"
 
 def prepare_finetuning_jsonl_file(
     json_path: Path = SINGLE_EXAMPLE_JSON_PATH,
+    assets_path: Path = FINETUNING_ASSETS_PATH,
 ) -> None:
     """Read all json files from data path and write a jsonl file."""
-    with open(
-        FINETUNING_ASSETS_PATH / FINETUNE_JSONL_FILENAME, "w"
-    ) as jsonl_out:
+    with open(assets_path / FINETUNE_JSONL_FILENAME, "w") as jsonl_out:
         for json_name in listdir(json_path):
-            with open(SINGLE_EXAMPLE_JSON_PATH / json_name) as f:
+            with open(json_path / json_name) as f:
                 for line in f:
                     jsonl_out.write(line)
                     jsonl_out.write("\n")
 
 
-def submit_finetune_job() -> None:
+def submit_finetune_job(
+    llm: str = "gpt-4o-2024-08-06",
+    start_job_id: Optional[str] = None,
+    json_path: Path = SINGLE_EXAMPLE_JSON_PATH,
+    assets_path: Path = FINETUNING_ASSETS_PATH,
+) -> None:
     """Submit finetuning job."""
 
     try:
-        with open(FINETUNING_ASSETS_PATH / FINETUNE_JOBS_FILENAME) as f:
+        with open(assets_path / FINETUNE_JOBS_FILENAME) as f:
             lines = f.read().splitlines()
             current_job_id = lines[-1]
     except FileNotFoundError:
         # no previous finetune model
         current_job_id = None
 
+    start_job_id = current_job_id if current_job_id else start_job_id
+
     finetune_engine = OpenAIFinetuneEngine(
-        "gpt-4o-2024-08-06",
-        (FINETUNING_ASSETS_PATH / FINETUNE_JSONL_FILENAME).as_posix(),
-        start_job_id=current_job_id,
+        llm,
+        (assets_path / FINETUNE_JSONL_FILENAME).as_posix(),
+        start_job_id=start_job_id,
         validate_json=False,
     )
     finetune_engine.finetune()
 
-    with open(FINETUNING_ASSETS_PATH / FINETUNE_JOBS_FILENAME, "a+") as f:
+    with open(assets_path / FINETUNE_JOBS_FILENAME, "a+") as f:
         f.write(finetune_engine._start_job.id)
         f.write("\n")
 
