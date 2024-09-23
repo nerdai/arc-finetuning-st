@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import json
 from os import listdir
 from pathlib import Path
 from typing import Any, List, Optional, cast
@@ -8,6 +9,8 @@ from llama_index.llms.openai import OpenAI
 
 from arc_finetuning_st.cli.evaluation import batch_runner
 from arc_finetuning_st.cli.finetune import (
+    FINETUNE_JOBS_FILENAME,
+    check_job_status,
     prepare_finetuning_jsonl_file,
     submit_finetune_job,
 )
@@ -56,17 +59,60 @@ def handle_evaluate(
 
 
 def handle_finetune_job_submit(
-    llm: str, start_job_id: Optional[str], **kwargs: Any
+    llm: str,
+    start_job_id: Optional[str],
+    continue_latest: bool = False,
+    **kwargs: Any,
 ) -> None:
     prepare_finetuning_jsonl_file(
         json_path=SINGLE_EXAMPLE_JSON_PATH, assets_path=FINETUNING_ASSETS_PATH
     )
+    if continue_latest:
+        try:
+            with open(FINETUNING_ASSETS_PATH / FINETUNE_JOBS_FILENAME) as f:
+                lines = f.read().splitlines()
+                metadata_str = lines[-1]
+                metadata = json.loads(metadata_str)
+                start_job_id = metadata["start_job_id"]
+                llm = metadata["model"]
+        except FileNotFoundError:
+            # no previous finetune model
+            raise ValueError(
+                "Missing `finetuning_jobs.jsonl` file. Have you submitted a prior job?"
+            )
+
     submit_finetune_job(
         llm=llm,
         start_job_id=start_job_id,
-        json_path=SINGLE_EXAMPLE_JSON_PATH,
         assets_path=FINETUNING_ASSETS_PATH,
     )
+
+
+def handle_check_finetune_job(
+    start_job_id: Optional[str], llm: Optional[str], use_latest: bool
+) -> None:
+    if use_latest:
+        try:
+            with open(FINETUNING_ASSETS_PATH / FINETUNE_JOBS_FILENAME) as f:
+                job_metadata = json.load(f)
+                start_job_id = job_metadata["start_job_id"]
+                llm = job_metadata["model"]
+        except FileNotFoundError:
+            raise ValueError(
+                "No finetuning_jobs.json file exists. You likely haven't submitted a job yet."
+            )
+    if not use_latest and (start_job_id is None or llm is None):
+        raise ValueError(
+            "If not `use_latest` then must provide `start_job_id` and `llm`."
+        )
+
+    # make type checking happy
+    if start_job_id and llm:
+        check_job_status(
+            start_job_id=start_job_id,
+            llm=llm,
+            assets_path=FINETUNING_ASSETS_PATH,
+        )
 
 
 def main() -> None:
@@ -116,6 +162,9 @@ def main() -> None:
         type=str,
         default=None,
         help="Previously started job id, to continue finetuning.",
+    )
+    finetune_parser.add_argument(
+        "--continue-latest", action=argparse.BooleanOptionalAction
     )
     finetune_parser.set_defaults(
         func=lambda args: handle_finetune_job_submit(**vars(args))

@@ -1,3 +1,4 @@
+import json
 from os import listdir
 from pathlib import Path
 from typing import Optional
@@ -13,7 +14,7 @@ FINETUNING_ASSETS_PATH = Path(
 )
 
 FINETUNE_JSONL_FILENAME = "finetuning.jsonl"
-FINETUNE_JOBS_FILENAME = "finetuning_jobs.txt"
+FINETUNE_JOBS_FILENAME = "finetuning_jobs.jsonl"
 
 
 def prepare_finetuning_jsonl_file(
@@ -32,21 +33,9 @@ def prepare_finetuning_jsonl_file(
 def submit_finetune_job(
     llm: str = "gpt-4o-2024-08-06",
     start_job_id: Optional[str] = None,
-    json_path: Path = SINGLE_EXAMPLE_JSON_PATH,
     assets_path: Path = FINETUNING_ASSETS_PATH,
 ) -> None:
     """Submit finetuning job."""
-
-    try:
-        with open(assets_path / FINETUNE_JOBS_FILENAME) as f:
-            lines = f.read().splitlines()
-            current_job_id = lines[-1]
-    except FileNotFoundError:
-        # no previous finetune model
-        current_job_id = None
-
-    start_job_id = current_job_id if current_job_id else start_job_id
-
     finetune_engine = OpenAIFinetuneEngine(
         llm,
         (assets_path / FINETUNE_JSONL_FILENAME).as_posix(),
@@ -56,35 +45,28 @@ def submit_finetune_job(
     finetune_engine.finetune()
 
     with open(assets_path / FINETUNE_JOBS_FILENAME, "a+") as f:
-        f.write(finetune_engine._start_job.id)
+        metadata = {
+            "model": llm,
+            "start_job_id": finetune_engine._start_job.id,
+        }
+        json.dump(metadata, f)
         f.write("\n")
 
     print(finetune_engine.get_current_job())
 
 
-def check_latest_job_status() -> None:
+def check_job_status(
+    start_job_id: str,
+    llm: str = "gpt-4o-2024-08-06",
+    assets_path: Path = FINETUNING_ASSETS_PATH,
+) -> None:
     """Check on status of most recent submitted finetuning job."""
-    try:
-        with open(FINETUNING_ASSETS_PATH / FINETUNE_JOBS_FILENAME) as f:
-            lines = f.read().splitlines()
-            current_job_id = lines[-1]
-    except FileNotFoundError:
-        raise ValueError(
-            "No finetuning_jobs.txt file exists. You likely haven't submitted a job yet."
-        )
 
     finetune_engine = OpenAIFinetuneEngine(
-        "gpt-4o-2024-08-06",
-        (FINETUNING_ASSETS_PATH / FINETUNE_JSONL_FILENAME).as_posix(),
-        start_job_id=current_job_id,
+        llm,
+        (assets_path / FINETUNE_JSONL_FILENAME).as_posix(),
+        start_job_id=start_job_id,
         validate_json=False,
     )
 
     print(finetune_engine.get_current_job())
-
-
-if __name__ == "__main__":
-    FINETUNING_ASSETS_PATH.mkdir(exist_ok=True, parents=True)
-    prepare_finetuning_jsonl_file()
-    # submit_finetune_job()
-    check_latest_job_status()
