@@ -157,10 +157,7 @@ class Controller:
 
     @property
     def task_file_names(self) -> List[str]:
-        try:
-            return listdir(self._data_path)
-        except FileNotFoundError:
-            return []
+        return listdir(self._data_path)
 
     def radio_format_task_name(self, selected_task: str) -> str:
         if selected_task in self.saved_finetuning_examples:
