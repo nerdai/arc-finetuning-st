@@ -11,7 +11,8 @@ commands = [
 
 
 def download_data() -> None:
-    subprocess.run("; ".join(commands), capture_output=True, shell=True)
+    ret = subprocess.run("; ".join(commands), capture_output=True, shell=True)
+    print(ret.stdout.decode())
 
 
 if __name__ == "__main__":
