@@ -21,6 +21,7 @@ pandas = "^2.2.2"
 
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "^4.2.5"
+llama-index-utils-workflow = "^0.2.1"
 
 [tool.poetry.scripts]
 arc-finetuning-cli = 'arc_finetuning_st.cli.command_line:main'

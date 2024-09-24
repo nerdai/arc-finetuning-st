@@ -23,6 +23,10 @@ effective implementation of the Human In the Loop Pattern.
   <img height="500" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/human-in-loop-2.excalidraw.svg" alt="cover">
 </p>
 
+<p align="center">
+  <img height="500" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/ArcTaskSolverWorkflow.svg" alt="cover">
+</p>
+
 
 ## Running The App
 
