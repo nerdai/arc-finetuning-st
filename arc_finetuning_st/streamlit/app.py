@@ -11,7 +11,6 @@ st.set_page_config(layout="wide")
 
 @st.cache_resource
 def startup() -> Tuple[Controller,]:
-    # download_data()
     controller = Controller()
     return (controller,)
 

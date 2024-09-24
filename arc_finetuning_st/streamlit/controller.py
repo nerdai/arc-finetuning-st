@@ -12,7 +12,6 @@ from llama_index.core.workflow.handler import WorkflowHandler
 from llama_index.llms.openai import OpenAI
 
 from arc_finetuning_st.finetuning.finetuning_example import FineTuningExample
-from arc_finetuning_st.streamlit.startup import download_data
 from arc_finetuning_st.workflows.arc_task_solver import (
     ARCTaskSolverWorkflow,
     WorkflowOutput,
@@ -34,11 +33,6 @@ class Controller:
             Path(__file__).parents[2].absolute(), "finetuning_examples"
         )
         self._finetuning_examples_path.mkdir(exist_ok=True, parents=True)
-        try:
-            listdir(self._data_path)
-        except FileNotFoundError:
-            # download data
-            download_data()
 
     def reset(self) -> None:
         # clear prediction
