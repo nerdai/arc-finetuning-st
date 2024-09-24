@@ -121,7 +121,7 @@ with test_col:
             tabs = st.tabs(
                 [f"Test Case {ix}" for ix in range(1, num_cases + 1)]
             )
-            for ix, tab in enumerate(tabs):
+            for ix, tab in enumerate(tabs[:1]):  # only do first test case
                 with tab:
                     left, right = st.columns(
                         [1, 1], vertical_alignment="top", gap="medium"
