@@ -4,6 +4,7 @@ import streamlit as st
 from llama_index.core.tools.function_tool import async_to_sync
 
 from arc_finetuning_st.streamlit.controller import Controller
+from arc_finetuning_st.streamlit.startup import download_data
 
 # startup
 st.set_page_config(layout="wide")
@@ -11,6 +12,7 @@ st.set_page_config(layout="wide")
 
 @st.cache_resource
 def startup() -> Tuple[Controller,]:
+    download_data()
     controller = Controller()
     return (controller,)
 
