@@ -30,7 +30,6 @@ effective implementation of the Human In the Loop Pattern.
 > [!NOTE]
 > The data used for this application has been directly pulled from ARC-AGI Github
 > repository (see [here](https://github.com/fchollet/ARC-AGI/tree/master/data)).
-> `RabbitMQMessageQueueConfig` can load its params from environment variables.
 <!-- prettier-ignore-end -->
 
 We first must install the app's dependencies. To do so, we can use `poetry`:
