@@ -1,7 +1,7 @@
 import asyncio
 import json
 import logging
-from os import listdir
+import os
 from pathlib import Path
 from typing import Any, List, Literal, Optional, cast
 
@@ -10,6 +10,7 @@ import plotly.express as px
 import streamlit as st
 from llama_index.core.workflow.handler import WorkflowHandler
 from llama_index.llms.openai import OpenAI
+from openai import AuthenticationError
 
 from arc_finetuning_st.finetuning.finetuning_example import FineTuningExample
 from arc_finetuning_st.workflows.arc_task_solver import (
@@ -54,6 +55,16 @@ class Controller:
         # streamlit element
         self.reset()
 
+    def check_openai_api_key(self) -> None:
+        client = OpenAI(api_key=st.session_state.openai_api_key)._get_client()
+        try:
+            client.models.list()
+        except AuthenticationError:
+            st.session_state.is_valid_api_key = False
+        else:
+            st.session_state.is_valid_api_key = True
+        os.environ["OPENAI_API_KEY"] = st.session_state.openai_api_key
+
     @staticmethod
     def plot_grid(
         grid: List[List[int]],
@@ -97,6 +108,10 @@ class Controller:
 
     async def handle_prediction_click(self) -> None:
         """Run workflow to generate prediction."""
+        if not st.session_state.is_valid_api_key:
+            st.error("The OPENAI API KEY entered is invalid.")
+            return None
+
         selected_task = st.session_state.selected_task
         if selected_task:
             task = self.load_task(selected_task)
@@ -147,11 +162,11 @@ class Controller:
 
     @property
     def saved_finetuning_examples(self) -> List[str]:
-        return listdir(self._finetuning_examples_path)
+        return os.listdir(self._finetuning_examples_path)
 
     @property
     def task_file_names(self) -> List[str]:
-        return listdir(self._data_path)
+        return os.listdir(self._data_path)
 
     def radio_format_task_name(self, selected_task: str) -> str:
         if selected_task in self.saved_finetuning_examples:

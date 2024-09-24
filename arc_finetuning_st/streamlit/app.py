@@ -30,6 +30,8 @@ if "disable_preview_button" not in st.session_state:
     st.session_state["disable_preview_button"] = True
 if "metric_value" not in st.session_state:
     st.session_state["metric_value"] = "N/A"
+if "is_valid_api_key" not in st.session_state:
+    st.session_state["is_valid_api_key"] = False
 
 logo = '[<img src="https://d3ddy8balm3goa.cloudfront.net/llamaindex/LlamaLogoSmall.png" width="28" height="28" />](https://github.com/run-llama/llama-agents "Check out the llama-agents Github repo!")'
 st.title("ARC Task Solver with Human Input")
@@ -40,6 +42,13 @@ st.markdown(
 
 # sidebar
 with st.sidebar:
+    api_key = st.text_input(
+        "OpenAI API key:",
+        type="password",
+        key="openai_api_key",
+        on_change=controller.check_openai_api_key,
+    )
+
     task_selection = st.radio(
         label="Tasks",
         options=controller.task_file_names,
