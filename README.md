@@ -23,10 +23,6 @@ effective implementation of the Human In the Loop Pattern.
   <img height="500" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/human-in-loop-2.excalidraw.svg" alt="cover">
 </p>
 
-<p align="center">
-  <img height="500" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/ArcTaskSolverWorkflow.svg" alt="cover">
-</p>
-
 
 ## Running The App
 
@@ -58,7 +54,7 @@ the sidebar of the applications.
 Next, we discuss how to use the app in order to solve a given ARC task.
 
 <p align="center">
-  <img height="500" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/arc-task-solver-app.svg" alt="cover">
+  <img height="500" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/.svg" alt="cover">
 </p>
 
 ### Solving an ARC Task
@@ -74,7 +70,11 @@ To solve the task, we cycle through the following three steps:
 2. Evaluation
 3. Critique (human in the loop)
 
-(Under the hood a LlamaIndex `Workflow` implements these three `steps`.)
+Under the hood a LlamaIndex `Workflow` implements these three `steps`.
+
+<p align="center">
+  <img height="500" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/ArcTaskSolverWorkflow.svg" alt="cover">
+</p>
 
 Step 1. makes use of an LLM to produce the Prediction whereas Step 2. is
 deterministic and is a mere comparison between the ground truth test output and
