@@ -117,11 +117,12 @@ with test_col:
         selected_task = st.session_state.selected_task
         if selected_task:
             task = controller.load_task(selected_task)
-            num_cases = len(task["test"])
+            # num_cases = len(task["test"])
+            num_cases = 1  # only do first test case for now
             tabs = st.tabs(
                 [f"Test Case {ix}" for ix in range(1, num_cases + 1)]
             )
-            for ix, tab in enumerate(tabs[:1]):  # only do first test case
+            for ix, tab in enumerate(tabs):
                 with tab:
                     left, right = st.columns(
                         [1, 1], vertical_alignment="top", gap="medium"
