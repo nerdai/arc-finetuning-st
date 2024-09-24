@@ -42,13 +42,16 @@ poetry install
 Finally, to run the streamlit app:
 
 ```sh
-export OPENAI_API_KEY=<FILL-IN> && streamlit run arc_finetuning_st/streamlit/app.py
+streamlit run arc_finetuning_st/streamlit/app.py
 ```
 
 ## How To Use The App
 
-In the next two sections, we discuss how to use the app in order to solve a given
-ARC task.
+This app uses OpenAI LLMs. As such, you will need to provide a valid api key to
+execute the solver. You pass your api key in the designated text input within
+the sidebar of the applications.
+
+Next, we discuss how to use the app in order to solve a given ARC task.
 
 <p align="center">
   <img height="500" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/arc-task-solver-app.svg" alt="cover">
@@ -116,6 +119,13 @@ commands:
     evaluate            Evaluation of ARC Task predictions with LLM and ARCTaskSolverWorkflow.
     finetune            Finetune OpenAI LLM on ARC Task Solver examples.
     job-status          Check the status of finetuning job.
+```
+
+Before using cli, you must have set the environment variable `OPENAI_API_KEY`
+with a valid api key.
+
+```sh
+export OPENAI_API_KEY=<fill-in>
 ```
 
 ### Submitting a fine-tuning job
