@@ -28,8 +28,8 @@ effective implementation of the Human In the Loop Pattern.
 
 <!-- prettier-ignore-start -->
 > [!NOTE]
-> The data used for this application has been directly pulled from ARC-AGI Github
-> repository (see [here](https://github.com/fchollet/ARC-AGI/tree/master/data)).
+> All of the task json files used for this application that is stored in `data/`
+> has been directly pulled from ARC-AGI Github repository (see [here](https://github.com/fchollet/ARC-AGI/tree/master/data)).
 <!-- prettier-ignore-end -->
 
 We first must install the app's dependencies. To do so, we can use `poetry`:
