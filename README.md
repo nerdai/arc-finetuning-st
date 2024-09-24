@@ -54,7 +54,7 @@ the sidebar of the applications.
 Next, we discuss how to use the app in order to solve a given ARC task.
 
 <p align="center">
-  <img height="500" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/.svg" alt="cover">
+  <img height="500" src="https://d3ddy8balm3goa.cloudfront.net/arc-task-solver-st-demo/arc-task-solver-app.svg" alt="cover">
 </p>
 
 ### Solving an ARC Task
