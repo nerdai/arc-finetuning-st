@@ -26,18 +26,14 @@ effective implementation of the Human In the Loop Pattern.
 
 ## Running The App
 
-Before running the streamlit app, we first must download the ARC dataset. The
-below command will download the dataset and store it in a directory named `data/`:
+<!-- prettier-ignore-start -->
+> [!NOTE]
+> The data used for this application has been directly pulled from ARC-AGI Github
+> repository (see [here](https://github.com/fchollet/ARC-AGI/tree/master/data)).
+> `RabbitMQMessageQueueConfig` can load its params from environment variables.
+<!-- prettier-ignore-end -->
 
-```sh
-wget https://github.com/fchollet/ARC-AGI/archive/refs/heads/master.zip -O ./master.zip
-unzip ./master.zip -d ./
-mv ARC-AGI-master/data ./
-rm -rf ARC-AGI-master
-rm master.zip
-```
-
-Next, we must install the app's dependencies. To do so, we can use `poetry`:
+We first must install the app's dependencies. To do so, we can use `poetry`:
 
 ```sh
 poetry shell
