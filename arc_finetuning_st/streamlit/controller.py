@@ -34,6 +34,7 @@ class Controller:
             Path(__file__).parents[2].absolute(), "finetuning_examples"
         )
         self._finetuning_examples_path.mkdir(exist_ok=True, parents=True)
+        self._task_file_names: Optional[List[str]] = None
 
     def reset(self) -> None:
         # clear prediction
@@ -166,7 +167,9 @@ class Controller:
 
     @property
     def task_file_names(self) -> List[str]:
-        return os.listdir(self._data_path)
+        if not self._task_file_names:
+            self._task_file_names = sorted(os.listdir(self._data_path))
+        return self._task_file_names
 
     def radio_format_task_name(self, selected_task: str) -> str:
         if selected_task in self.saved_finetuning_examples:
