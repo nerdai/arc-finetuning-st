@@ -5,6 +5,7 @@ from os import listdir
 from pathlib import Path
 from typing import Any, List, Optional, cast
 
+from llama_index.finetuning.openai import OpenAIFinetuneEngine
 from llama_index.llms.openai import OpenAI
 
 from arc_finetuning_st.cli.evaluation import batch_runner
@@ -33,13 +34,23 @@ def handle_evaluate(
     num_workers: int,
     verbose: bool,
     sleep: int,
+    start_job_id: Optional[str] = None,
     **kwargs: Any,
 ) -> None:
     data_path = Path(
         Path(__file__).parents[2].absolute(), "data", "evaluation"
     )
     task_paths = [data_path / t for t in listdir(data_path)]
-    llm = OpenAI(llm)
+    if start_job_id:
+        finetune_engine = OpenAIFinetuneEngine(
+            llm,
+            "./",  # dummy
+            start_job_id=start_job_id,
+            validate_json=False,
+        )
+        llm = finetune_engine.get_finetuned_model()
+    else:
+        llm = OpenAI(llm)
     w = ARCTaskSolverWorkflow(llm=llm, timeout=None)
     results = asyncio.run(
         batch_runner(
@@ -146,6 +157,13 @@ def main() -> None:
         "-v", "--verbose", action=argparse.BooleanOptionalAction
     )
     evaluate_parser.add_argument("-s", "--sleep", type=int, default=10)
+    evaluate_parser.add_argument(
+        "-j",
+        "--start-job-id",
+        type=str,
+        default=None,
+        help="Start job id of fine-tuned model.",
+    )
     evaluate_parser.set_defaults(
         func=lambda args: handle_evaluate(**vars(args))
     )
